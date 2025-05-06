@@ -650,7 +650,7 @@ class GoogleMailApp(APIApplication):
             logger.exception(f"Error retrieving profile: {type(e).__name__} - {str(e)}")
             return f"Error retrieving profile: {type(e).__name__} - {str(e)}"
 
-    def watch_users(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, labelFilterAction=None, labelFilterBehavior=None, labelIds=None, topicName=None) -> dict[str, Any]:
+    def watch_users(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, labelFilterAction=None, labelFilterBehavior=None, labelIds=None, topicName=None) -> dict[str, Any]:
         """
         Watch Users
 
@@ -666,7 +666,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             labelFilterAction (string): labelFilterAction Example: 'exclude'.
             labelFilterBehavior (string): labelFilterBehavior Example: 'include'.
             labelIds (array): labelIds Example: "['officia ex reprehenderit et', 'labore ullamco ut']".
@@ -700,12 +700,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/watch"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def stop_notifications_for_user(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def stop_notifications_for_user(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Stop Notifications for User
 
@@ -721,7 +721,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -732,12 +732,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/stop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def send_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, id=None, message=None) -> dict[str, Any]:
+    def send_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, id=None, message=None) -> dict[str, Any]:
         """
         Send Drafts
 
@@ -753,7 +753,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             id (string): id Example: 'elit Lorem'.
             message (object): message
                 Example:
@@ -818,12 +818,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/send"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_drafts(self, userId, id, format=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_drafts(self, userId, id, format=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Drafts
 
@@ -841,7 +841,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -854,12 +854,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('format', format), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('format', format), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, message=None) -> dict[str, Any]:
+    def update_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, message=None) -> dict[str, Any]:
         """
         Update Drafts
 
@@ -876,7 +876,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             message (object): message
                 Example:
                 ```json
@@ -942,12 +942,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Drafts
 
@@ -964,7 +964,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -977,12 +977,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, id=None, message=None) -> dict[str, Any]:
+    def create_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, id=None, message=None) -> dict[str, Any]:
         """
         Create Drafts
 
@@ -998,7 +998,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             id (string): id Example: 'elit Lorem'.
             message (object): message
                 Example:
@@ -1063,12 +1063,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_history(self, userId, maxResults=None, pageToken=None, startHistoryId=None, labelId=None, historyTypes=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_history(self, userId, maxResults=None, pageToken=None, startHistoryId=None, labelId=None, historyTypes=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List History
 
@@ -1089,7 +1089,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1100,12 +1100,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/history"
-        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('startHistoryId', startHistoryId), ('labelId', labelId), ('historyTypes', historyTypes), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('startHistoryId', startHistoryId), ('labelId', labelId), ('historyTypes', historyTypes), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def trash_messsages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def trash_messsages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Trash Messsages
 
@@ -1122,7 +1122,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1135,12 +1135,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/trash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def untrash_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def untrash_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Untrash Messages
 
@@ -1157,7 +1157,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1170,12 +1170,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/untrash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def modify_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
+    def modify_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
         """
         Modify Messages
 
@@ -1192,7 +1192,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             addLabelIds (array): addLabelIds Example: "['qui eu do ex', 'do sit esse dolor proident']".
             removeLabelIds (array): removeLabelIds
                 Example:
@@ -1225,12 +1225,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/modify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def batch_delete(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, ids=None) -> Any:
+    def batch_delete(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, ids=None) -> Any:
         """
         Batch Delete
 
@@ -1246,7 +1246,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             ids (array): ids
                 Example:
                 ```json
@@ -1271,12 +1271,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/batchDelete"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def import_messages(self, userId, internalDateSource=None, neverMarkSpam=None, processForCalendar=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def import_messages(self, userId, internalDateSource=None, neverMarkSpam=None, processForCalendar=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
         """
         Import Messages
 
@@ -1296,7 +1296,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             historyId (string): historyId Example: 'nisi tempor do'.
             id (string): id Example: 'eu incididunt laborum irure'.
             internalDate (string): internalDate Example: 'cupidatat officia anim'.
@@ -1372,12 +1372,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/import"
-        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('neverMarkSpam', neverMarkSpam), ('processForCalendar', processForCalendar), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('neverMarkSpam', neverMarkSpam), ('processForCalendar', processForCalendar), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def send_messages(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def send_messages(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
         """
         Send Messages
 
@@ -1393,7 +1393,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             historyId (string): historyId Example: 'nisi tempor do'.
             id (string): id Example: 'eu incididunt laborum irure'.
             internalDate (string): internalDate Example: 'cupidatat officia anim'.
@@ -1469,12 +1469,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/send"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def batch_modify(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, addLabelIds=None, ids=None, removeLabelIds=None) -> Any:
+    def batch_modify(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, ids=None, removeLabelIds=None) -> Any:
         """
         Batch Modify
 
@@ -1490,7 +1490,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             addLabelIds (array): addLabelIds Example: "['irure Lorem ex proident', 'proident ']".
             ids (array): ids Example: "['ullamco aliqua anim dolo', 'irure ea']".
             removeLabelIds (array): removeLabelIds
@@ -1527,12 +1527,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/batchModify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def insert_messages(self, userId, internalDateSource=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def insert_messages(self, userId, internalDateSource=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
         """
         Insert Messages
 
@@ -1550,7 +1550,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             historyId (string): historyId Example: 'nisi tempor do'.
             id (string): id Example: 'eu incididunt laborum irure'.
             internalDate (string): internalDate Example: 'cupidatat officia anim'.
@@ -1626,12 +1626,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages"
-        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_messages(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_messages(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Messages
 
@@ -1650,7 +1650,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1663,12 +1663,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}"
-        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Messages
 
@@ -1685,7 +1685,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -1698,12 +1698,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_attachments(self, userId, messageId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_attachments(self, userId, messageId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Attachments
 
@@ -1721,7 +1721,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1736,12 +1736,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{messageId}/attachments/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_labels(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, color=None, id=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def create_labels(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, id=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
         """
         Create Labels
 
@@ -1757,7 +1757,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             color (object): color
             id (string): id Example: 'nostrud officia pariatur'.
             labelListVisibility (string): labelListVisibility Example: 'labelShow'.
@@ -1809,12 +1809,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Labels
 
@@ -1831,7 +1831,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -1844,12 +1844,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def update_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
         """
         Update Labels
 
@@ -1866,7 +1866,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             color (object): color
             labelListVisibility (string): labelListVisibility Example: 'labelShow'.
             messageListVisibility (string): messageListVisibility Example: 'show'.
@@ -1919,12 +1919,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Labels
 
@@ -1941,7 +1941,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -1954,12 +1954,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def patch_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
         """
         Patch Labels
 
@@ -1976,7 +1976,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             color (object): color
             labelListVisibility (string): labelListVisibility Example: 'labelShow'.
             messageListVisibility (string): messageListVisibility Example: 'show'.
@@ -2029,12 +2029,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_threads(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_threads(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Threads
 
@@ -2053,7 +2053,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2066,12 +2066,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}"
-        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Threads
 
@@ -2088,7 +2088,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -2101,12 +2101,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def modify_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
+    def modify_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
         """
         Modify Threads
 
@@ -2123,7 +2123,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             addLabelIds (array): addLabelIds Example: "['labore anim culpa aliqua', 'Duis sed irure Ut aliqua']".
             removeLabelIds (array): removeLabelIds
                 Example:
@@ -2156,12 +2156,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}/modify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def trash_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def trash_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Trash Threads
 
@@ -2178,7 +2178,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2191,12 +2191,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}/trash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_threads(self, userId, maxResults=None, pageToken=None, q=None, labelIds=None, includeSpamTrash=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_threads(self, userId, maxResults=None, pageToken=None, q=None, labelIds=None, includeSpamTrash=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List Threads
 
@@ -2217,7 +2217,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2228,12 +2228,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads"
-        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('q', q), ('labelIds', labelIds), ('includeSpamTrash', includeSpamTrash), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('q', q), ('labelIds', labelIds), ('includeSpamTrash', includeSpamTrash), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         GET IMAP
 
@@ -2249,7 +2249,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2260,12 +2260,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/imap"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, autoExpunge=None, enabled=None, expungeBehavior=None, maxFolderSize=None) -> dict[str, Any]:
+    def update_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, autoExpunge=None, enabled=None, expungeBehavior=None, maxFolderSize=None) -> dict[str, Any]:
         """
         Update IMAP
 
@@ -2281,7 +2281,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             autoExpunge (boolean): autoExpunge Example: 'False'.
             enabled (boolean): enabled Example: 'False'.
             expungeBehavior (string): expungeBehavior Example: 'deleteForever'.
@@ -2312,12 +2312,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/imap"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get POP Settings
 
@@ -2333,7 +2333,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2344,12 +2344,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/pop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, accessWindow=None, disposition=None) -> dict[str, Any]:
+    def update_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, accessWindow=None, disposition=None) -> dict[str, Any]:
         """
         Update POP Settings
 
@@ -2365,7 +2365,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             accessWindow (string): accessWindow Example: 'fromNowOn'.
             disposition (string): disposition
                 Example:
@@ -2390,12 +2390,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/pop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Vacation Settings
 
@@ -2411,7 +2411,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2422,12 +2422,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/vacation"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, enableAutoReply=None, endTime=None, responseBodyHtml=None, responseBodyPlainText=None, responseSubject=None, restrictToContacts=None, restrictToDomain=None, startTime=None) -> dict[str, Any]:
+    def update_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, enableAutoReply=None, endTime=None, responseBodyHtml=None, responseBodyPlainText=None, responseSubject=None, restrictToContacts=None, restrictToDomain=None, startTime=None) -> dict[str, Any]:
         """
         Update Vacation Settings
 
@@ -2443,7 +2443,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             enableAutoReply (boolean): enableAutoReply Example: 'False'.
             endTime (string): endTime Example: 'enim in aliqua Ut commodo'.
             responseBodyHtml (string): responseBodyHtml Example: 'id'.
@@ -2486,12 +2486,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/vacation"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Language Settings
 
@@ -2507,7 +2507,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2518,12 +2518,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/language"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, displayLanguage=None) -> dict[str, Any]:
+    def update_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayLanguage=None) -> dict[str, Any]:
         """
         Update Language Settings
 
@@ -2539,7 +2539,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             displayLanguage (string): displayLanguage
                 Example:
                 ```json
@@ -2561,12 +2561,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/language"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_auto_forwarding_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_auto_forwarding_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Auto Forwarding Settings
 
@@ -2582,7 +2582,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2593,12 +2593,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/autoForwarding"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_auto_forwarding(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, disposition=None, emailAddress=None, enabled=None) -> dict[str, Any]:
+    def update_auto_forwarding(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, disposition=None, emailAddress=None, enabled=None) -> dict[str, Any]:
         """
         Update Auto Forwarding
 
@@ -2614,7 +2614,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             disposition (string): disposition Example: 'trash'.
             emailAddress (string): emailAddress Example: 'officia ullamco Ut laboris eu'.
             enabled (boolean): enabled
@@ -2642,12 +2642,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/autoForwarding"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def set_default_smime_config(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def set_default_smime_config(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Set default S/MIME config
 
@@ -2665,7 +2665,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -2680,12 +2680,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}/setDefault"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Send As SMIME Info
 
@@ -2703,7 +2703,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2718,12 +2718,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Send As SMIME INfo
 
@@ -2741,7 +2741,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -2756,12 +2756,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List SMIME Info
 
@@ -2778,7 +2778,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2791,12 +2791,12 @@ class GoogleMailApp(APIApplication):
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def insert_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, encryptedKeyPassword=None, expiration=None, id=None, isDefault=None, issuerCn=None, pem=None, pkcs12=None) -> dict[str, Any]:
+    def insert_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, encryptedKeyPassword=None, expiration=None, id=None, isDefault=None, issuerCn=None, pem=None, pkcs12=None) -> dict[str, Any]:
         """
         Insert SMIME Info
 
@@ -2813,7 +2813,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             encryptedKeyPassword (string): encryptedKeyPassword Example: 'cillum ut'.
             expiration (string): expiration Example: 'dolore magna'.
             id (string): id Example: 'id'.
@@ -2855,12 +2855,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def verify_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def verify_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Verify Send As
 
@@ -2877,7 +2877,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -2890,12 +2890,12 @@ class GoogleMailApp(APIApplication):
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/verify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Send As
 
@@ -2912,7 +2912,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -2925,12 +2925,12 @@ class GoogleMailApp(APIApplication):
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_send_as_setting(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def update_send_as_setting(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
         """
         Update Send As Setting
 
@@ -2947,7 +2947,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             displayName (string): displayName Example: 'Excepteur'.
             isDefault (boolean): isDefault Example: 'True'.
             isPrimary (boolean): isPrimary Example: 'True'.
@@ -3000,12 +3000,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Send As
 
@@ -3022,7 +3022,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -3035,12 +3035,12 @@ class GoogleMailApp(APIApplication):
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def patch_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
         """
         Patch Send As
 
@@ -3057,7 +3057,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             displayName (string): displayName Example: 'Excepteur'.
             isDefault (boolean): isDefault Example: 'True'.
             isPrimary (boolean): isPrimary Example: 'True'.
@@ -3110,12 +3110,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as1(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_send_as1(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Send As
 
@@ -3131,7 +3131,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3142,12 +3142,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_send_as(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, sendAsEmail=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def create_send_as(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, sendAsEmail=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
         """
         Create Send As
 
@@ -3163,7 +3163,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             displayName (string): displayName Example: 'Excepteur'.
             isDefault (boolean): isDefault Example: 'True'.
             isPrimary (boolean): isPrimary Example: 'True'.
@@ -3215,12 +3215,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_cse_keypairs(self, userId, keyPairId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_cse_keypairs(self, userId, keyPairId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         GET CSE Keypairs
 
@@ -3237,7 +3237,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3250,12 +3250,12 @@ class GoogleMailApp(APIApplication):
         if keyPairId is None:
             raise ValueError("Missing required parameter 'keyPairId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs/{keyPairId}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_cse_keypairs(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_cse_keypairs(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List CSE Keypairs
 
@@ -3273,7 +3273,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3284,12 +3284,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs"
-        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_cse_keypairs(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, disableTime=None, enablementState=None, keyPairId=None, pem=None, pkcs7=None, privateKeyMetadata=None, subjectEmailAddresses=None) -> dict[str, Any]:
+    def create_cse_keypairs(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, disableTime=None, enablementState=None, keyPairId=None, pem=None, pkcs7=None, privateKeyMetadata=None, subjectEmailAddresses=None) -> dict[str, Any]:
         """
         Create CSE Keypairs
 
@@ -3305,7 +3305,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             disableTime (string): disableTime Example: 'cill'.
             enablementState (string): enablementState Example: 'disabled'.
             keyPairId (string): keyPairId Example: 'Lorem eiusmod'.
@@ -3369,12 +3369,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_cse_identites(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_cse_identites(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List CSE Identites
 
@@ -3392,7 +3392,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3403,12 +3403,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities"
-        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_cse_identites(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, emailAddress=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
+    def create_cse_identites(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, emailAddress=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
         """
         Create CSE Identites
 
@@ -3424,7 +3424,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             emailAddress (string): emailAddress Example: 'aliquip quis id'.
             primaryKeyPairId (string): primaryKeyPairId Example: 'in exercitation esse'.
             signAndEncryptKeyPairs (object): signAndEncryptKeyPairs
@@ -3455,12 +3455,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_cse_identites(self, userId, emailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
+    def patch_cse_identites(self, userId, emailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
         """
         PATCH CSE Identites
 
@@ -3477,7 +3477,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             primaryKeyPairId (string): primaryKeyPairId Example: 'in exercitation esse'.
             signAndEncryptKeyPairs (object): signAndEncryptKeyPairs
                 Example:
@@ -3509,12 +3509,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{emailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_cse_idenetites(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_cse_idenetites(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         GET CSE Idenetites
 
@@ -3531,7 +3531,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3544,12 +3544,12 @@ class GoogleMailApp(APIApplication):
         if cseEmailAddress is None:
             raise ValueError("Missing required parameter 'cseEmailAddress'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{cseEmailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_cse_idenities(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_cse_idenities(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete CSE Idenities
 
@@ -3566,7 +3566,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -3579,12 +3579,12 @@ class GoogleMailApp(APIApplication):
         if cseEmailAddress is None:
             raise ValueError("Missing required parameter 'cseEmailAddress'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{cseEmailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Filters
 
@@ -3601,7 +3601,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3614,12 +3614,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Filters
 
@@ -3636,7 +3636,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -3649,12 +3649,12 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List Filters
 
@@ -3670,7 +3670,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3681,12 +3681,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, action=None, criteria=None, id=None) -> dict[str, Any]:
+    def create_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, action=None, criteria=None, id=None) -> dict[str, Any]:
         """
         Create Filters
 
@@ -3702,7 +3702,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             action (object): action
             criteria (object): criteria
             id (string): id
@@ -3750,12 +3750,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Forwarding Addresses
 
@@ -3772,7 +3772,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3785,12 +3785,12 @@ class GoogleMailApp(APIApplication):
         if forwardingEmail is None:
             raise ValueError("Missing required parameter 'forwardingEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses/{forwardingEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Forwarding Addresses
 
@@ -3807,7 +3807,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -3820,12 +3820,12 @@ class GoogleMailApp(APIApplication):
         if forwardingEmail is None:
             raise ValueError("Missing required parameter 'forwardingEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses/{forwardingEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_forwarding_addresses(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_forwarding_addresses(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List Forwarding Addresses
 
@@ -3841,7 +3841,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3852,12 +3852,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_forwarding_address(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, forwardingEmail=None, verificationStatus=None) -> dict[str, Any]:
+    def create_forwarding_address(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, forwardingEmail=None, verificationStatus=None) -> dict[str, Any]:
         """
         Create Forwarding Address
 
@@ -3873,7 +3873,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             forwardingEmail (string): forwardingEmail Example: 'ad tempor dolor'.
             verificationStatus (string): verificationStatus
                 Example:
@@ -3898,12 +3898,12 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def get_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         Get Delegates
 
@@ -3920,7 +3920,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -3933,12 +3933,12 @@ class GoogleMailApp(APIApplication):
         if delegateEmail is None:
             raise ValueError("Missing required parameter 'delegateEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates/{delegateEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> Any:
+    def delete_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
         """
         Delete Delegates
 
@@ -3955,7 +3955,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             Any: No Content
@@ -3968,12 +3968,12 @@ class GoogleMailApp(APIApplication):
         if delegateEmail is None:
             raise ValueError("Missing required parameter 'delegateEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates/{delegateEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None) -> dict[str, Any]:
+    def list_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
         """
         List Delegates
 
@@ -3989,7 +3989,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
 
         Returns:
             dict[str, Any]: Successful response
@@ -4000,12 +4000,12 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, __xgafv=None, delegateEmail=None, verificationStatus=None) -> dict[str, Any]:
+    def create_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, delegateEmail=None, verificationStatus=None) -> dict[str, Any]:
         """
         Create Delegates
 
@@ -4021,7 +4021,7 @@ class GoogleMailApp(APIApplication):
             quotaUser (string): Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Example: '{{quotaUser}}'.
             upload_protocol (string): Upload protocol for media (e.g. "raw", "multipart"). Example: '{{upload_protocol}}'.
             uploadType (string): Legacy upload protocol for media (e.g. "media", "multipart"). Example: '{{uploadType}}'.
-            __xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
+            xgafv (string): V1 error format. Example: '{{$.xgafv}}'.
             delegateEmail (string): delegateEmail Example: 'Duis commodo enim irure'.
             verificationStatus (string): verificationStatus
                 Example:
@@ -4046,7 +4046,7 @@ class GoogleMailApp(APIApplication):
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', __xgafv)] if v is not None}
+        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
