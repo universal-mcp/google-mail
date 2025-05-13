@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "universal-mcp-google-mail"
-version = "0.1.1"
+version = "0.1.2"
 description = "A Universal MCP Application: universal_mcp_google_mail"
 readme = "README.md"
 requires-python = ">=3.11"
