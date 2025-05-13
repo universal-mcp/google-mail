@@ -4,8 +4,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "universal_mcp_google_mail"
-version = "0.1.0"
+name = "universal-mcp-google-mail"
+version = "0.1.1"
 description = "A Universal MCP Application: universal_mcp_google_mail"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -40,8 +40,8 @@ dev = [
 universal_mcp_google_mail = "universal_mcp_google_mail:main"
 
 [project.urls]
-Homepage = "" # Add project URL later
-Repository = "" # Add repository URL later
+Homepage = "https://github.com/universal-mcp/google-mail" # Add project URL later
+Repository = "https://github.com/universal-mcp/google-mail" # Add repository URL later
 
 # --- Hatch Configuration ---
 [tool.hatch.version]
