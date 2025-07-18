@@ -406,6 +406,7 @@ class GoogleMailApp(APIApplication):
                     - 'older_than:1w' for emails from the last week
                     - 'older_than:1m' for emails from the last month
                     - 'older_than:1y' for emails from the last year
+                    - 'after:2025/07/15 before:2025/07/18' for emails from July 15th to July 18th, 2025
                     - 'from:someone@example.com' for emails from a specific sender
                     - 'subject:invoice' for emails with 'invoice' in the subject
                     - 'has:attachment' for emails with attachments
