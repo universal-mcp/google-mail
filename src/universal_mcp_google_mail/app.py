@@ -394,7 +394,22 @@ class GoogleMailApp(APIApplication):
 
         Args:
             max_results: Maximum number of messages to return (max 500, default 20)
-            q: Search query string to filter messages using Gmail search syntax
+            q: Search query string to filter messages using Gmail search syntax.
+                Examples:
+                    - 'newer_than:1h' for emails from the last hour
+                    - 'newer_than:1d' for emails from the last day
+                    - 'newer_than:1w' for emails from the last week
+                    - 'newer_than:1m' for emails from the last month
+                    - 'newer_than:1y' for emails from the last year
+                    - 'older_than:1h' for emails from the last hour
+                    - 'older_than:1d' for emails from the last day
+                    - 'older_than:1w' for emails from the last week
+                    - 'older_than:1m' for emails from the last month
+                    - 'older_than:1y' for emails from the last year
+                    - 'from:someone@example.com' for emails from a specific sender
+                    - 'subject:invoice' for emails with 'invoice' in the subject
+                    - 'has:attachment' for emails with attachments
+                    - 'is:unread' for unread emails
             include_spam_trash: Boolean flag to include messages from spam and trash folders (default False)
 
         Returns:
