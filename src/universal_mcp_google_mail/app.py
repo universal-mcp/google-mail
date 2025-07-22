@@ -318,16 +318,16 @@ class GoogleMailApp(APIApplication):
 
     def get_message(self, message_id: str) -> str:
         """
-        Retrieves and formats a specific email message from Gmail API by its ID, including sender, recipient, date, subject, and message preview.
+        Retrieves and formats a specific email message from Gmail API by its ID, including sender, recipient, date, subject, and full message body content.
 
         Args:
             message_id: The unique identifier of the Gmail message to retrieve
 
         Returns:
-            A formatted string containing the message details (ID, From, To, Date, Subject, Preview)
+            A formatted string containing the complete message details (ID, From, To, Date, Subject, Full Body Content)
 
         Tags:
-            retrieve, email, format, api, gmail, message, important
+            retrieve, email, format, api, gmail, message, important, body, content
         """
         url = f"{self.base_api_url}/messages/{message_id}"
         response = self._get(url)
@@ -356,11 +356,87 @@ class GoogleMailApp(APIApplication):
             f"Subject: {subject}\n\n"
         )
 
-        # Include snippet as preview of message content
-        if "snippet" in message_data:
+        # Extract full email body content
+        email_body = self._extract_email_body(message_data.get("payload", {}))
+        if email_body:
+            result += f"Body Content:\n{email_body}\n"
+        elif "snippet" in message_data:
+            # Fallback to snippet if body extraction fails
             result += f"Preview: {message_data['snippet']}\n"
 
         return result
+
+    def _extract_email_body(self, payload):
+        """
+        Extracts the email body content from the Gmail API payload.
+        
+        Args:
+            payload: The payload section from Gmail API response
+            
+        Returns:
+            str: The email body content (plain text preferred, HTML as fallback)
+        """
+        try:
+            # Handle single part message
+            if payload.get("body") and payload.get("body", {}).get("data"):
+                return self._decode_base64(payload["body"]["data"])
+            
+            # Handle multipart message
+            parts = payload.get("parts", [])
+            if not parts:
+                return ""
+            
+            plain_text_body = ""
+            html_body = ""
+            
+            for part in parts:
+                mime_type = part.get("mimeType", "")
+                
+                # Extract plain text
+                if mime_type == "text/plain":
+                    if part.get("body") and part.get("body", {}).get("data"):
+                        plain_text_body = self._decode_base64(part["body"]["data"])
+                
+                # Extract HTML content
+                elif mime_type == "text/html":
+                    if part.get("body") and part.get("body", {}).get("data"):
+                        html_body = self._decode_base64(part["body"]["data"])
+                
+                # Handle nested multipart (recursive)
+                elif mime_type.startswith("multipart/") and part.get("parts"):
+                    nested_body = self._extract_email_body(part)
+                    if nested_body and not plain_text_body:
+                        plain_text_body = nested_body
+            
+            # Prefer plain text, fallback to HTML
+            if plain_text_body:
+                return plain_text_body
+            elif html_body:
+                return f"[HTML Content]\n{html_body}"
+            
+            return ""
+            
+        except Exception as e:
+            logger.error(f"Error extracting email body: {str(e)}")
+            return ""
+    
+    def _decode_base64(self, data):
+        """
+        Decodes base64 URL-safe encoded data from Gmail API.
+        
+        Args:
+            data: Base64 URL-safe encoded string
+            
+        Returns:
+            str: Decoded string content
+        """
+        try:
+            # Gmail API uses URL-safe base64 encoding
+            decoded_bytes = base64.urlsafe_b64decode(data)
+            return decoded_bytes.decode('utf-8')
+        except Exception as e:
+            logger.error(f"Error decoding base64 data: {str(e)}")
+            return f"[Unable to decode content: {str(e)}]"
 
     def list_messages(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
