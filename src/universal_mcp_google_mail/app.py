@@ -2,6 +2,7 @@ import base64
 from email.message import EmailMessage
 from typing import Any
 from loguru import logger
+import concurrent.futures
 
 from universal_mcp.applications import APIApplication
 from universal_mcp.exceptions import NotAuthorizedError
@@ -323,72 +324,47 @@ class GoogleMailApp(APIApplication):
             message_id: The unique identifier of the Gmail message to retrieve
 
         Returns:
-            A formatted string containing the message details (ID, From, To, Date, Subject, Preview) or an error message if the retrieval fails
-
-        Raises:
-            NotAuthorizedError: When the request lacks proper Gmail API authorization
-            KeyError: When required configuration keys or message fields are missing
-            Exception: For general API communication errors or unexpected issues
+            A formatted string containing the message details (ID, From, To, Date, Subject, Preview)
 
         Tags:
             retrieve, email, format, api, gmail, message, important
         """
-        try:
-            url = f"{self.base_api_url}/messages/{message_id}"
+        url = f"{self.base_api_url}/messages/{message_id}"
+        response = self._get(url)
+        message_data = self._handle_response(response)
 
-            logger.info(f"Retrieving message with ID: {message_id}")
+        # Extract basic message metadata
+        headers = {}
 
-            response = self._get(url)
+        # Extract headers if they exist
+        for header in message_data.get("payload", {}).get("headers", []):
+            name = header.get("name", "")
+            value = header.get("value", "")
+            headers[name] = value
 
-            if response.status_code == 200:
-                message_data = response.json()
+        from_addr = headers.get("From", "Unknown sender")
+        to = headers.get("To", "Unknown recipient")
+        subject = headers.get("Subject", "No subject")
+        date = headers.get("Date", "Unknown date")
 
-                # Extract basic message metadata
-                headers = {}
+        # Format the result
+        result = (
+            f"Message ID: {message_id}\n"
+            f"From: {from_addr}\n"
+            f"To: {to}\n"
+            f"Date: {date}\n"
+            f"Subject: {subject}\n\n"
+        )
 
-                # Extract headers if they exist
-                for header in message_data.get("payload", {}).get("headers", []):
-                    name = header.get("name", "")
-                    value = header.get("value", "")
-                    headers[name] = value
+        # Include snippet as preview of message content
+        if "snippet" in message_data:
+            result += f"Preview: {message_data['snippet']}\n"
 
-                from_addr = headers.get("From", "Unknown sender")
-                to = headers.get("To", "Unknown recipient")
-                subject = headers.get("Subject", "No subject")
-                date = headers.get("Date", "Unknown date")
-
-                # Format the result
-                result = (
-                    f"Message ID: {message_id}\n"
-                    f"From: {from_addr}\n"
-                    f"To: {to}\n"
-                    f"Date: {date}\n"
-                    f"Subject: {subject}\n\n"
-                )
-
-                # Include snippet as preview of message content
-                if "snippet" in message_data:
-                    result += f"Preview: {message_data['snippet']}\n"
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error retrieving message: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error retrieving message: {type(e).__name__} - {str(e)}")
-            return f"Error retrieving message: {type(e).__name__} - {str(e)}"
+        return result
 
     def list_messages(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
-    ) -> str:
+    ) -> Any:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
 
@@ -414,7 +390,7 @@ class GoogleMailApp(APIApplication):
             include_spam_trash: Boolean flag to include messages from spam and trash folders (default False)
 
         Returns:
-            A formatted string containing the list of message IDs and thread IDs, or an error message if the operation fails
+            A formatted string containing detailed information for each message (ID, From, To, Date, Subject, Preview) with parallel processing for efficiency
 
         Raises:
             NotAuthorizedError: When the Gmail API authentication is invalid or missing
@@ -424,61 +400,61 @@ class GoogleMailApp(APIApplication):
         Tags:
             list, messages, gmail, search, query, pagination, important
         """
-        try:
-            url = f"{self.base_api_url}/messages"
+        url = f"{self.base_api_url}/messages?format=metadata"
 
-            # Build query parameters
-            params = {"maxResults": max_results}
+        # Build query parameters
+        params = {"maxResults": max_results}
 
-            if q:
-                params["q"] = q
+        if q:
+            params["q"] = q
 
-            if include_spam_trash:
-                params["includeSpamTrash"] = "true"
+        if include_spam_trash:
+            params["includeSpamTrash"] = "true"
 
-            logger.info(f"Retrieving messages list with params: {params}")
+        logger.info(f"Retrieving messages list with params: {params}")
 
-            response = self._get(url, params=params)
-
-            if response.status_code == 200:
-                data = response.json()
-                messages = data.get("messages", [])
-                result_size = data.get("resultSizeEstimate", 0)
-
-                if not messages:
-                    return "No messages found matching the criteria."
-
-                result = f"Found {len(messages)} messages (estimated total: {result_size}):\n\n"
-
-                # Just list message IDs without fetching additional details
-                for i, msg in enumerate(messages, 1):
-                    message_id = msg.get("id", "Unknown ID")
-                    thread_id = msg.get("threadId", "Unknown Thread")
-                    result += f"{i}. Message ID: {message_id} (Thread: {thread_id})\n"
-
-                # Add a note about how to get message details
-                result += "\nUse get_message(message_id) to view the contents of a specific message."
-
-                if "nextPageToken" in data:
-                    result += "\nMore messages available. Use page token to see more."
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return (
-                    f"Error listing messages: {response.status_code} - {response.text}"
-                )
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error listing messages: {type(e).__name__} - {str(e)}")
-            return f"Error listing messages: {type(e).__name__} - {str(e)}"
+        response = self._get(url, params=params)
+        data = self._handle_response(response)
+        
+        # Extract message IDs
+        messages = data.get("messages", [])
+        if not messages:
+            return "No messages found matching the criteria."
+            
+        # Extract just the message IDs
+        message_ids = [msg.get("id") for msg in messages if msg.get("id")]
+        
+        if not message_ids:
+            return "No valid message IDs found."
+        
+        # Use ThreadPoolExecutor to get detailed information for each message in parallel
+        detailed_results = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            # Submit all get_message calls
+            future_to_message_id = {
+                executor.submit(self.get_message, message_id): message_id 
+                for message_id in message_ids
+            }
+            
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(future_to_message_id):
+                message_id = future_to_message_id[future]
+                try:
+                    result = future.result()
+                    detailed_results.append(result)
+                except Exception as e:
+                    # If individual message fails, add error info but continue
+                    detailed_results.append(f"Error retrieving message {message_id}: {str(e)}")
+        
+        # Format final result
+        result_size = data.get("resultSizeEstimate", len(messages))
+        final_result = f"Found {len(messages)} messages (estimated total: {result_size}):\n\n"
+        
+        # Add all detailed message information
+        for i, detail in enumerate(detailed_results, 1):
+            final_result += f"{i}. {detail}\n"
+        
+        return final_result
 
     def list_labels(self) -> str:
         """
