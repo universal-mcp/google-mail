@@ -7,6 +7,21 @@ import concurrent.futures
 from universal_mcp.applications import APIApplication
 from universal_mcp.exceptions import NotAuthorizedError
 from universal_mcp.integrations import Integration
+from pydantic import BaseModel
+
+
+class GmailMessage(BaseModel):
+    message_id: str
+    from_addr: str
+    to: str
+    date: str
+    subject: str
+    body_content: str
+
+
+class GmailMessagesList(BaseModel):
+    messages: list[dict] 
+    next_page_token: str | None = None  
 
 
 class GoogleMailApp(APIApplication):
@@ -35,36 +50,19 @@ class GoogleMailApp(APIApplication):
         Tags:
             send, email, api, communication, important
         """
-        try:
-            url = f"{self.base_api_url}/messages/send"
+        url = f"{self.base_api_url}/messages/send"
 
-            # Create email in base64 encoded format
-            raw_message = self._create_message(to, subject, body)
+        # Create email in base64 encoded format
+        raw_message = self._create_message(to, subject, body)
 
-            # Format the data as expected by Gmail API
-            email_data = {"raw": raw_message}
+        # Format the data as expected by Gmail API
+        email_data = {"raw": raw_message}
 
-            logger.info(f"Sending email to {to}")
+        logger.info(f"Sending email to {to}")
 
-            response = self._post(url, email_data)
+        response = self._post(url, email_data)
 
-            if response.status_code == 200:
-                return f"Successfully sent email to {to}"
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error sending email: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            # Return the authorization message directly
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error sending email: {type(e).__name__} - {str(e)}")
-            return f"Error sending email: {type(e).__name__} - {str(e)}"
+        return response.json()
 
     def _create_message(self, to, subject, body):
         try:
@@ -316,7 +314,7 @@ class GoogleMailApp(APIApplication):
             logger.exception(f"Error listing drafts: {type(e).__name__} - {str(e)}")
             return f"Error listing drafts: {type(e).__name__} - {str(e)}"
 
-    def get_message(self, message_id: str) -> str:
+    def get_message(self, message_id: str) -> GmailMessage:
         """
         Retrieves and formats a specific email message from Gmail API by its ID, including sender, recipient, date, subject, and full message body content.
 
@@ -324,47 +322,40 @@ class GoogleMailApp(APIApplication):
             message_id: The unique identifier of the Gmail message to retrieve
 
         Returns:
-            A formatted string containing the complete message details (ID, From, To, Date, Subject, Full Body Content)
+            A dictionary containing the cleaned message details (serializable as JSON)
 
         Tags:
             retrieve, email, format, api, gmail, message, important, body, content
         """
         url = f"{self.base_api_url}/messages/{message_id}"
         response = self._get(url)
-        message_data = self._handle_response(response)
+        raw_data = self._handle_response(response)
 
-        # Extract basic message metadata
+        # Extract headers
         headers = {}
-
-        # Extract headers if they exist
-        for header in message_data.get("payload", {}).get("headers", []):
+        for header in raw_data.get("payload", {}).get("headers", []):
             name = header.get("name", "")
             value = header.get("value", "")
             headers[name] = value
 
-        from_addr = headers.get("From", "Unknown sender")
-        to = headers.get("To", "Unknown recipient")
-        subject = headers.get("Subject", "No subject")
-        date = headers.get("Date", "Unknown date")
+        # Extract body content
+        body_content = self._extract_email_body(raw_data.get("payload", {}))
+        if not body_content:
+            if "snippet" in raw_data:
+                body_content = f"Preview: {raw_data['snippet']}"
+            else:
+                body_content = "No content available"
 
-        # Format the result
-        result = (
-            f"Message ID: {message_id}\n"
-            f"From: {from_addr}\n"
-            f"To: {to}\n"
-            f"Date: {date}\n"
-            f"Subject: {subject}\n\n"
+        message = GmailMessage(
+            message_id=message_id,
+            from_addr=headers.get("From", "Unknown sender"),
+            to=headers.get("To", "Unknown recipient"),
+            date=headers.get("Date", "Unknown date"),
+            subject=headers.get("Subject", "No subject"),
+            body_content=body_content
         )
 
-        # Extract full email body content
-        email_body = self._extract_email_body(message_data.get("payload", {}))
-        if email_body:
-            result += f"Body Content:\n{email_body}\n"
-        elif "snippet" in message_data:
-            # Fallback to snippet if body extraction fails
-            result += f"Preview: {message_data['snippet']}\n"
-
-        return result
+        return message.model_dump()
 
     def _extract_email_body(self, payload):
         """
@@ -440,7 +431,7 @@ class GoogleMailApp(APIApplication):
 
     def list_messages(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
-    ) -> Any:
+    ) -> GmailMessagesList:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
 
@@ -466,7 +457,7 @@ class GoogleMailApp(APIApplication):
             include_spam_trash: Boolean flag to include messages from spam and trash folders (default False)
 
         Returns:
-            A formatted string containing detailed information for each message (ID, From, To, Date, Subject, Preview) with parallel processing for efficiency
+            A dictionary containing the list of messages and next page token for pagination
 
         Raises:
             NotAuthorizedError: When the Gmail API authentication is invalid or missing
@@ -494,43 +485,34 @@ class GoogleMailApp(APIApplication):
         
         # Extract message IDs
         messages = data.get("messages", [])
-        if not messages:
-            return "No messages found matching the criteria."
-            
-        # Extract just the message IDs
         message_ids = [msg.get("id") for msg in messages if msg.get("id")]
         
-        if not message_ids:
-            return "No valid message IDs found."
-        
         # Use ThreadPoolExecutor to get detailed information for each message in parallel
-        detailed_results = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            # Submit all get_message calls
-            future_to_message_id = {
-                executor.submit(self.get_message, message_id): message_id 
-                for message_id in message_ids
-            }
-            
-            # Collect results as they complete
-            for future in concurrent.futures.as_completed(future_to_message_id):
-                message_id = future_to_message_id[future]
-                try:
-                    result = future.result()
-                    detailed_results.append(result)
-                except Exception as e:
-                    # If individual message fails, add error info but continue
-                    detailed_results.append(f"Error retrieving message {message_id}: {str(e)}")
+        detailed_messages = []
+        if message_ids:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                # Submit all get_message calls
+                future_to_message_id = {
+                    executor.submit(self.get_message, message_id): message_id 
+                    for message_id in message_ids
+                }
+                
+                # Collect results as they complete
+                for future in concurrent.futures.as_completed(future_to_message_id):
+                    message_id = future_to_message_id[future]
+                    try:
+                        result = future.result()
+                        detailed_messages.append(result)
+                    except Exception as e:
+                        logger.error(f"Error retrieving message {message_id}: {str(e)}")
+                        # Skip failed messages rather than including error strings
         
-        # Format final result
-        result_size = data.get("resultSizeEstimate", len(messages))
-        final_result = f"Found {len(messages)} messages (estimated total: {result_size}):\n\n"
+        response_data = GmailMessagesList(
+            messages=detailed_messages,
+            next_page_token=data.get("nextPageToken")  
+        )
         
-        # Add all detailed message information
-        for i, detail in enumerate(detailed_results, 1):
-            final_result += f"{i}. {detail}\n"
-        
-        return final_result
+        return response_data.model_dump()
 
     def list_labels(self) -> str:
         """
