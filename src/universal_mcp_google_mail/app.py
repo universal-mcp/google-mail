@@ -8,7 +8,7 @@ from universal_mcp.applications import APIApplication
 from universal_mcp.exceptions import NotAuthorizedError
 from universal_mcp.integrations import Integration
 
-from .models import GmailMessage, GmailMessagesList  
+from universal_mcp_google_mail.models import GmailMessage, GmailMessagesList  
 
 
 class GoogleMailApp(APIApplication):
