@@ -7,21 +7,8 @@ import concurrent.futures
 from universal_mcp.applications import APIApplication
 from universal_mcp.exceptions import NotAuthorizedError
 from universal_mcp.integrations import Integration
-from pydantic import BaseModel
 
-
-class GmailMessage(BaseModel):
-    message_id: str
-    from_addr: str
-    to: str
-    date: str
-    subject: str
-    body_content: str
-
-
-class GmailMessagesList(BaseModel):
-    messages: list[dict] 
-    next_page_token: str | None = None  
+from .models import GmailMessage, GmailMessagesList  
 
 
 class GoogleMailApp(APIApplication):
