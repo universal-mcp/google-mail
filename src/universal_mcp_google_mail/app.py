@@ -17,7 +17,7 @@ class GoogleMailApp(APIApplication):
         self.base_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
         self.base_url = "https://gmail.googleapis.com"
 
-    def send_email(self, to: str, subject: str, body: str) -> str:
+    def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
         """
         Sends an email using the Gmail API and returns a confirmation or error message.
 
@@ -49,7 +49,7 @@ class GoogleMailApp(APIApplication):
 
         response = self._post(url, email_data)
 
-        return response.json()
+        return self._handle_response(response)
 
     def _create_message(self, to, subject, body):
         try:
@@ -68,7 +68,7 @@ class GoogleMailApp(APIApplication):
             logger.error(f"Error creating message: {str(e)}")
             raise
 
-    def create_draft(self, to: str, subject: str, body: str) -> str:
+    def create_draft(self, to: str, subject: str, body: str) -> dict[str, Any]:
         """
         Creates a draft email message in Gmail using the Gmail API and returns a confirmation status.
 
@@ -88,36 +88,20 @@ class GoogleMailApp(APIApplication):
         Tags:
             create, email, draft, gmail, api, important
         """
-        try:
-            url = f"{self.base_api_url}/drafts"
+        
+        url = f"{self.base_api_url}/drafts"
 
-            raw_message = self._create_message(to, subject, body)
+        raw_message = self._create_message(to, subject, body)
 
-            draft_data = {"message": {"raw": raw_message}}
+        draft_data = {"message": {"raw": raw_message}}
 
-            logger.info(f"Creating draft email to {to}")
+        logger.info(f"Creating draft email to {to}")
 
-            response = self._post(url, draft_data)
+        response = self._post(url, draft_data)
 
-            if response.status_code == 200:
-                draft_id = response.json().get("id", "unknown")
-                return f"Successfully created draft email with ID: {draft_id}"
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error creating draft: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error creating draft: {type(e).__name__} - {str(e)}")
-            return f"Error creating draft: {type(e).__name__} - {str(e)}"
+        return self._handle_response(response)
 
-    def send_draft(self, draft_id: str) -> str:
+    def send_draft(self, draft_id: str) -> dict[str, Any]:
         """
         Sends an existing draft email using the Gmail API and returns a confirmation message.
 
@@ -135,34 +119,18 @@ class GoogleMailApp(APIApplication):
         Tags:
             send, email, api, communication, important, draft
         """
-        try:
-            url = f"{self.base_api_url}/drafts/send"
+        
+        url = f"{self.base_api_url}/drafts/send"
 
-            draft_data = {"id": draft_id}
+        draft_data = {"id": draft_id}
 
-            logger.info(f"Sending draft email with ID: {draft_id}")
+        logger.info(f"Sending draft email with ID: {draft_id}")
 
-            response = self._post(url, draft_data)
+        response = self._post(url, draft_data)
 
-            if response.status_code == 200:
-                message_id = response.json().get("id", "unknown")
-                return f"Successfully sent draft email. Message ID: {message_id}"
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error sending draft: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error sending draft: {type(e).__name__} - {str(e)}")
-            return f"Error sending draft: {type(e).__name__} - {str(e)}"
+        return self._handle_response(response)
 
-    def get_draft(self, draft_id: str, format: str = "full") -> str:
+    def get_draft(self, draft_id: str, format: str = "full") -> dict[str, Any]:
         """
         Retrieves and formats a specific draft email from Gmail by its ID
 
@@ -181,55 +149,23 @@ class GoogleMailApp(APIApplication):
         Tags:
             retrieve, email, gmail, draft, api, format, important
         """
-        try:
-            url = f"{self.base_api_url}/drafts/{draft_id}"
+        
+        url = f"{self.base_api_url}/drafts/{draft_id}"
 
             # Add format parameter as query param
-            params = {"format": format}
+        params = {"format": format}
 
-            logger.info(f"Retrieving draft with ID: {draft_id}")
+        logger.info(f"Retrieving draft with ID: {draft_id}")
 
-            response = self._get(url, params=params)
+        response = self._get(url, params=params)
 
-            if response.status_code == 200:
-                draft_data = response.json()
+        return self._handle_response(response)
 
-                # Format the response in a readable way
-                message = draft_data.get("message", {})
-                headers = {}
-
-                # Extract headers if they exist
-                for header in message.get("payload", {}).get("headers", []):
-                    name = header.get("name", "")
-                    value = header.get("value", "")
-                    headers[name] = value
-
-                to = headers.get("To", "Unknown recipient")
-                subject = headers.get("Subject", "No subject")
-
-                result = f"Draft ID: {draft_id}\nTo: {to}\nSubject: {subject}\n"
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return (
-                    f"Error retrieving draft: {response.status_code} - {response.text}"
-                )
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error retrieving draft: {type(e).__name__} - {str(e)}")
-            return f"Error retrieving draft: {type(e).__name__} - {str(e)}"
+       
 
     def list_drafts(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
-    ) -> str:
+    ) -> dict[str, Any]:
         """
         Retrieves and formats a list of email drafts from the user's Gmail mailbox with optional filtering and pagination.
 
@@ -249,57 +185,24 @@ class GoogleMailApp(APIApplication):
         Tags:
             list, email, drafts, gmail, api, search, query, pagination, important
         """
-        try:
-            url = f"{self.base_api_url}/drafts"
+        
+        url = f"{self.base_api_url}/drafts"
 
             # Build query parameters
-            params = {"maxResults": max_results}
+        params = {"maxResults": max_results}
 
-            if q:
+        if q:
                 params["q"] = q
 
-            if include_spam_trash:
+        if include_spam_trash:
                 params["includeSpamTrash"] = "true"
 
-            logger.info(f"Retrieving drafts list with params: {params}")
+        logger.info(f"Retrieving drafts list with params: {params}")
 
-            response = self._get(url, params=params)
+        response = self._get(url, params=params)
 
-            if response.status_code == 200:
-                data = response.json()
-                drafts = data.get("drafts", [])
-                result_size = data.get("resultSizeEstimate", 0)
+        return self._handle_response(response)
 
-                if not drafts:
-                    return "No drafts found."
-
-                result = (
-                    f"Found {len(drafts)} drafts (estimated total: {result_size}):\n\n"
-                )
-
-                for i, draft in enumerate(drafts, 1):
-                    draft_id = draft.get("id", "Unknown ID")
-                    # The message field only contains id and threadId at this level
-                    result += f"{i}. Draft ID: {draft_id}\n"
-
-                if "nextPageToken" in data:
-                    result += "\nMore drafts available. Use page token to see more."
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error listing drafts: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except KeyError as key_error:
-            logger.error(f"Missing key error: {str(key_error)}")
-            return f"Configuration error: Missing required key - {str(key_error)}"
-        except Exception as e:
-            logger.exception(f"Error listing drafts: {type(e).__name__} - {str(e)}")
-            return f"Error listing drafts: {type(e).__name__} - {str(e)}"
 
     def get_message(self, message_id: str) -> GmailMessage:
         """
@@ -343,7 +246,6 @@ class GoogleMailApp(APIApplication):
         )
 
         return message.model_dump()
-
     def _extract_email_body(self, payload):
         """
         Extracts the email body content from the Gmail API payload.
@@ -501,7 +403,7 @@ class GoogleMailApp(APIApplication):
         import json
         return json.dumps(response_data.model_dump())
 
-    def list_labels(self) -> str:
+    def list_labels(self) -> dict[str, Any]:
         """
         Retrieves and formats a list of all labels (both system and user-created) from the user's Gmail account, organizing them by type and sorting them alphabetically.
 
@@ -518,70 +420,16 @@ class GoogleMailApp(APIApplication):
         Tags:
             list, gmail, labels, fetch, organize, important, management
         """
-        try:
-            url = f"{self.base_api_url}/labels"
+        
+        url = f"{self.base_api_url}/labels"
 
-            logger.info("Retrieving Gmail labels")
+        logger.info("Retrieving Gmail labels")
 
-            response = self._get(url)
+        response = self._get(url)
 
-            if response.status_code == 200:
-                data = response.json()
-                labels = data.get("labels", [])
+        return self._handle_response(response)
 
-                if not labels:
-                    return "No labels found in your Gmail account."
-
-                # Sort labels by type (system first, then user) and then by name
-                system_labels = []
-                user_labels = []
-
-                for label in labels:
-                    label_id = label.get("id", "Unknown ID")
-                    label_name = label.get("name", "Unknown Name")
-                    label_type = label.get("type", "Unknown Type")
-
-                    if label_type == "system":
-                        system_labels.append((label_id, label_name))
-                    else:
-                        user_labels.append((label_id, label_name))
-
-                # Sort by name within each category
-                system_labels.sort(key=lambda x: x[1])
-                user_labels.sort(key=lambda x: x[1])
-
-                result = f"Found {len(labels)} Gmail labels:\n\n"
-
-                # System labels
-                if system_labels:
-                    result += "System Labels:\n"
-                    for label_id, label_name in system_labels:
-                        result += f"- {label_name} (ID: {label_id})\n"
-                    result += "\n"
-
-                # User labels
-                if user_labels:
-                    result += "User Labels:\n"
-                    for label_id, label_name in user_labels:
-                        result += f"- {label_name} (ID: {label_id})\n"
-
-                # Add note about using labels
-                result += "\nThese label IDs can be used with list_messages to filter emails by label."
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error listing labels: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except Exception as e:
-            logger.exception(f"Error listing labels: {type(e).__name__} - {str(e)}")
-            return f"Error listing labels: {type(e).__name__} - {str(e)}"
-
-    def create_label(self, name: str) -> str:
+    def create_label(self, name: str) -> dict[str, Any]:
         """
         Creates a new Gmail label with specified visibility settings and returns creation status details.
 
@@ -598,43 +446,23 @@ class GoogleMailApp(APIApplication):
         Tags:
             create, label, gmail, management, important
         """
-        try:
-            url = f"{self.base_api_url}/labels"
+
+        url = f"{self.base_api_url}/labels"
 
             # Create the label data with just the essential fields
-            label_data = {
+        label_data = {
                 "name": name,
                 "labelListVisibility": "labelShow",  # Show in label list
                 "messageListVisibility": "show",  # Show in message list
             }
 
-            logger.info(f"Creating new Gmail label: {name}")
+        logger.info(f"Creating new Gmail label: {name}")
 
-            response = self._post(url, label_data)
+        response = self._post(url, label_data)
 
-            if response.status_code in [200, 201]:
-                new_label = response.json()
-                label_id = new_label.get("id", "Unknown")
-                label_name = new_label.get("name", name)
+        return self._handle_response(response)
 
-                result = "Successfully created new label:\n"
-                result += f"- Name: {label_name}\n"
-                result += f"- ID: {label_id}\n"
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error creating label: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except Exception as e:
-            logger.exception(f"Error creating label: {type(e).__name__} - {str(e)}")
-            return f"Error creating label: {type(e).__name__} - {str(e)}"
-
-    def get_profile(self) -> str:
+    def get_profile(self) -> dict[str, Any]:
         """
         Retrieves and formats the user's Gmail profile information including email address, message count, thread count, and history ID.
 
@@ -651,41 +479,14 @@ class GoogleMailApp(APIApplication):
         Tags:
             fetch, profile, gmail, user-info, api-request, important
         """
-        try:
-            url = f"{self.base_api_url}/profile"
+        
+        url = f"{self.base_api_url}/profile"
 
-            logger.info("Retrieving Gmail user profile")
+        logger.info("Retrieving Gmail user profile")
 
-            response = self._get(url)
+        response = self._get(url)
+        return self._handle_response(response)
 
-            if response.status_code == 200:
-                profile_data = response.json()
-
-                # Extract profile information
-                email_address = profile_data.get("emailAddress", "Unknown")
-                messages_total = profile_data.get("messagesTotal", 0)
-                threads_total = profile_data.get("threadsTotal", 0)
-                history_id = profile_data.get("historyId", "Unknown")
-
-                # Format the response
-                result = "Gmail Profile Information:\n"
-                result += f"- Email Address: {email_address}\n"
-                result += f"- Total Messages: {messages_total:,}\n"
-                result += f"- Total Threads: {threads_total:,}\n"
-                result += f"- History ID: {history_id}\n"
-
-                return result
-            else:
-                logger.error(
-                    f"Gmail API Error: {response.status_code} - {response.text}"
-                )
-                return f"Error retrieving profile: {response.status_code} - {response.text}"
-        except NotAuthorizedError as e:
-            logger.warning(f"Gmail authorization required: {e.message}")
-            return e.message
-        except Exception as e:
-            logger.exception(f"Error retrieving profile: {type(e).__name__} - {str(e)}")
-            return f"Error retrieving profile: {type(e).__name__} - {str(e)}"
 
     def watch_users(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, labelFilterAction=None, labelFilterBehavior=None, labelIds=None, topicName=None) -> dict[str, Any]:
         """
