@@ -301,7 +301,7 @@ class GoogleMailApp(APIApplication):
             logger.exception(f"Error listing drafts: {type(e).__name__} - {str(e)}")
             return f"Error listing drafts: {type(e).__name__} - {str(e)}"
 
-    def get_message(self, message_id: str) -> dict[str, Any]:
+    def get_message(self, message_id: str) -> GmailMessage:
         """
         Retrieves and formats a specific email message from Gmail API by its ID, including sender, recipient, date, subject, and full message body content.
 
@@ -418,7 +418,7 @@ class GoogleMailApp(APIApplication):
 
     def list_messages(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
-    ) -> dict[str, Any]:
+    ) -> GmailMessagesList:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
 
@@ -498,8 +498,8 @@ class GoogleMailApp(APIApplication):
             messages=detailed_messages,
             next_page_token=data.get("nextPageToken")  
         )
-        
-        return response_data.model_dump()
+        import json
+        return json.dumps(response_data.model_dump())
 
     def list_labels(self) -> str:
         """
