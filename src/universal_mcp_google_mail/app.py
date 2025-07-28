@@ -17,14 +17,15 @@ class GoogleMailApp(APIApplication):
         self.base_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
         self.base_url = "https://gmail.googleapis.com"
 
-    def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
+    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain") -> dict[str, Any]:
         """
         Sends an email using the Gmail API and returns a confirmation or error message.
 
         Args:
             to: The email address of the recipient
             subject: The subject line of the email
-            body: The main content of the email message
+            body: The content of the email message
+            body_type: The MIME subtype for the body ("plain" or "html"). Defaults to "plain".
 
         Returns:
             A string containing either a success confirmation message or an error description
@@ -38,11 +39,7 @@ class GoogleMailApp(APIApplication):
             send, email, api, communication, important
         """
         url = f"{self.base_api_url}/messages/send"
-
-        # Create email in base64 encoded format
-        raw_message = self._create_message(to, subject, body)
-
-        # Format the data as expected by Gmail API
+        raw_message = self._create_message(to, subject, body, body_type)
         email_data = {"raw": raw_message}
 
         logger.info(f"Sending email to {to}")
@@ -51,17 +48,13 @@ class GoogleMailApp(APIApplication):
 
         return self._handle_response(response)
 
-    def _create_message(self, to, subject, body):
+    def _create_message(self, to, subject, body, body_type="plain"):
         try:
             message = EmailMessage()
             message["to"] = to
             message["subject"] = subject
-            message.set_content(body)
-
-            # Use "me" as the default sender
             message["from"] = "me"
-
-            # Encode as base64 string
+            message.set_content(body, subtype=body_type)
             raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
             return raw
         except Exception as e:
