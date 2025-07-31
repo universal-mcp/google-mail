@@ -16,7 +16,7 @@ class GoogleMailApp(APIApplication):
         self.base_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
         self.base_url = "https://gmail.googleapis.com"
 
-    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain") -> dict[str, Any]:
+    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str = None) -> dict[str, Any]:
         """
         Sends an email using the Gmail API and returns a confirmation or error message.
 
@@ -25,6 +25,7 @@ class GoogleMailApp(APIApplication):
             subject: The subject line of the email
             body: The content of the email message
             body_type: The MIME subtype for the body ("plain" or "html"). Defaults to "plain".
+            thread_id: Optional thread ID to make this a reply to an existing conversation
 
         Returns:
             A string containing either a success confirmation message or an error description
@@ -35,13 +36,22 @@ class GoogleMailApp(APIApplication):
             Exception: For any other unexpected errors during the email sending process
 
         Tags:
-            send, email, api, communication, important, openWorldHint"""
+            send, email, api, communication, important, thread, reply, openWorldHint
+        """
+
+        
         url = f"{self.base_api_url}/messages/send"
         raw_message = self._create_message(to, subject, body, body_type)
         email_data = {"raw": raw_message}
-        logger.info(f"Sending email to {to}")
+        
+        # Add threadId to make it a proper reply if thread_id is provided
+        if thread_id:
+            email_data["threadId"] = thread_id
+            
         response = self._post(url, email_data)
         return self._handle_response(response)
+
+
 
     def _create_message(self, to, subject, body, body_type="plain"):
         try:
@@ -196,6 +206,7 @@ class GoogleMailApp(APIApplication):
             date=headers.get("Date", "Unknown date"),
             subject=headers.get("Subject", "No subject"),
             body_content=body_content,
+            thread_id=raw_data.get("threadId"),
         )
         return message.model_dump()
 
@@ -324,6 +335,29 @@ class GoogleMailApp(APIApplication):
         import json
 
         return json.dumps(response_data.model_dump())
+
+    def get_thread(self, thread_id: str) -> dict[str, Any]:
+        """
+        Retrieves a specific thread and all its messages from Gmail API.
+
+        Args:
+            thread_id: The unique identifier of the Gmail thread to retrieve
+
+        Returns:
+            A dictionary containing the thread details and all messages in the thread
+
+        Raises:
+            NotAuthorizedError: When Gmail API authentication is invalid or missing
+            KeyError: When required configuration keys are missing
+            Exception: For general errors during API communication or data processing
+
+        Tags:
+            retrieve, email, thread, gmail, api, conversation, important, readOnlyHint, openWorldHint
+        """
+        url = f"{self.base_api_url}/threads/{thread_id}"
+        logger.info(f"Retrieving thread {thread_id}")
+        response = self._get(url)
+        return self._handle_response(response)
 
     def list_labels(self) -> dict[str, Any]:
         """
