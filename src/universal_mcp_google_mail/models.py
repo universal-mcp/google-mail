@@ -8,6 +8,7 @@ class GmailMessage(BaseModel):
     date: str
     subject: str
     body_content: str
+    thread_id: str | None = None
 
 
 class GmailMessagesList(BaseModel):

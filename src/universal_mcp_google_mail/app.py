@@ -3,28 +3,29 @@ from email.message import EmailMessage
 from typing import Any
 from loguru import logger
 import concurrent.futures
-
 from universal_mcp.applications import APIApplication
 from universal_mcp.exceptions import NotAuthorizedError
 from universal_mcp.integrations import Integration
-
-from universal_mcp_google_mail.models import GmailMessage, GmailMessagesList  
+from universal_mcp_google_mail.models import GmailMessage, GmailMessagesList
 
 
 class GoogleMailApp(APIApplication):
+
     def __init__(self, integration: Integration) -> None:
         super().__init__(name="google-mail", integration=integration)
         self.base_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
         self.base_url = "https://gmail.googleapis.com"
 
-    def send_email(self, to: str, subject: str, body: str) -> dict[str, Any]:
+    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str = None) -> dict[str, Any]:
         """
         Sends an email using the Gmail API and returns a confirmation or error message.
 
         Args:
             to: The email address of the recipient
             subject: The subject line of the email
-            body: The main content of the email message
+            body: The content of the email message
+            body_type: The MIME subtype for the body ("plain" or "html"). Defaults to "plain".
+            thread_id: Optional thread ID to make this a reply to an existing conversation
 
         Returns:
             A string containing either a success confirmation message or an error description
@@ -35,33 +36,30 @@ class GoogleMailApp(APIApplication):
             Exception: For any other unexpected errors during the email sending process
 
         Tags:
-            send, email, api, communication, important
+            send, email, api, communication, important, thread, reply, openWorldHint
         """
+
+        
         url = f"{self.base_api_url}/messages/send"
-
-        # Create email in base64 encoded format
-        raw_message = self._create_message(to, subject, body)
-
-        # Format the data as expected by Gmail API
+        raw_message = self._create_message(to, subject, body, body_type)
         email_data = {"raw": raw_message}
-
-        logger.info(f"Sending email to {to}")
-
+        
+        # Add threadId to make it a proper reply if thread_id is provided
+        if thread_id:
+            email_data["threadId"] = thread_id
+            
         response = self._post(url, email_data)
-
         return self._handle_response(response)
 
-    def _create_message(self, to, subject, body):
+
+
+    def _create_message(self, to, subject, body, body_type="plain"):
         try:
             message = EmailMessage()
             message["to"] = to
             message["subject"] = subject
-            message.set_content(body)
-
-            # Use "me" as the default sender
             message["from"] = "me"
-
-            # Encode as base64 string
+            message.set_content(body, subtype=body_type)
             raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
             return raw
         except Exception as e:
@@ -86,19 +84,12 @@ class GoogleMailApp(APIApplication):
             Exception: For general API errors, network issues, or other unexpected problems
 
         Tags:
-            create, email, draft, gmail, api, important
-        """
-        
+            create, email, draft, gmail, api, important, openWorldHint"""
         url = f"{self.base_api_url}/drafts"
-
         raw_message = self._create_message(to, subject, body)
-
         draft_data = {"message": {"raw": raw_message}}
-
         logger.info(f"Creating draft email to {to}")
-
         response = self._post(url, draft_data)
-
         return self._handle_response(response)
 
     def send_draft(self, draft_id: str) -> dict[str, Any]:
@@ -117,17 +108,11 @@ class GoogleMailApp(APIApplication):
             Exception: For other unexpected errors during the API request or response handling
 
         Tags:
-            send, email, api, communication, important, draft
-        """
-        
+            send, email, api, communication, important, draft, openWorldHint"""
         url = f"{self.base_api_url}/drafts/send"
-
         draft_data = {"id": draft_id}
-
         logger.info(f"Sending draft email with ID: {draft_id}")
-
         response = self._post(url, draft_data)
-
         return self._handle_response(response)
 
     def get_draft(self, draft_id: str, format: str = "full") -> dict[str, Any]:
@@ -147,21 +132,13 @@ class GoogleMailApp(APIApplication):
             Exception: For any other unexpected errors during draft retrieval
 
         Tags:
-            retrieve, email, gmail, draft, api, format, important
+            retrieve, email, gmail, draft, api, format, important, readOnlyHint, openWorldHint
         """
-        
         url = f"{self.base_api_url}/drafts/{draft_id}"
-
-            # Add format parameter as query param
         params = {"format": format}
-
         logger.info(f"Retrieving draft with ID: {draft_id}")
-
         response = self._get(url, params=params)
-
         return self._handle_response(response)
-
-       
 
     def list_drafts(
         self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
@@ -183,26 +160,17 @@ class GoogleMailApp(APIApplication):
             Exception: For general errors during API communication or data processing
 
         Tags:
-            list, email, drafts, gmail, api, search, query, pagination, important
+            list, email, drafts, gmail, api, search, query, pagination, important, readOnlyHint, openWorldHint
         """
-        
         url = f"{self.base_api_url}/drafts"
-
-            # Build query parameters
         params = {"maxResults": max_results}
-
         if q:
-                params["q"] = q
-
+            params["q"] = q
         if include_spam_trash:
-                params["includeSpamTrash"] = "true"
-
+            params["includeSpamTrash"] = "true"
         logger.info(f"Retrieving drafts list with params: {params}")
-
         response = self._get(url, params=params)
-
         return self._handle_response(response)
-
 
     def get_message(self, message_id: str) -> GmailMessage:
         """
@@ -215,105 +183,85 @@ class GoogleMailApp(APIApplication):
             A dictionary containing the cleaned message details (serializable as JSON)
 
         Tags:
-            retrieve, email, format, api, gmail, message, important, body, content
+            retrieve, email, format, api, gmail, message, important, body, content, readOnlyHint, openWorldHint
         """
         url = f"{self.base_api_url}/messages/{message_id}"
         response = self._get(url)
         raw_data = self._handle_response(response)
-
-        # Extract headers
         headers = {}
         for header in raw_data.get("payload", {}).get("headers", []):
             name = header.get("name", "")
             value = header.get("value", "")
             headers[name] = value
-
-        # Extract body content
         body_content = self._extract_email_body(raw_data.get("payload", {}))
         if not body_content:
             if "snippet" in raw_data:
                 body_content = f"Preview: {raw_data['snippet']}"
             else:
                 body_content = "No content available"
-
         message = GmailMessage(
             message_id=message_id,
             from_addr=headers.get("From", "Unknown sender"),
             to=headers.get("To", "Unknown recipient"),
             date=headers.get("Date", "Unknown date"),
             subject=headers.get("Subject", "No subject"),
-            body_content=body_content
+            body_content=body_content,
+            thread_id=raw_data.get("threadId"),
         )
-
         return message.model_dump()
+
     def _extract_email_body(self, payload):
         """
         Extracts the email body content from the Gmail API payload.
-        
+
         Args:
             payload: The payload section from Gmail API response
-            
+
         Returns:
             str: The email body content (plain text preferred, HTML as fallback)
         """
         try:
-            # Handle single part message
             if payload.get("body") and payload.get("body", {}).get("data"):
                 return self._decode_base64(payload["body"]["data"])
-            
-            # Handle multipart message
             parts = payload.get("parts", [])
             if not parts:
                 return ""
-            
             plain_text_body = ""
             html_body = ""
-            
             for part in parts:
                 mime_type = part.get("mimeType", "")
-                
-                # Extract plain text
                 if mime_type == "text/plain":
                     if part.get("body") and part.get("body", {}).get("data"):
                         plain_text_body = self._decode_base64(part["body"]["data"])
-                
-                # Extract HTML content
                 elif mime_type == "text/html":
                     if part.get("body") and part.get("body", {}).get("data"):
                         html_body = self._decode_base64(part["body"]["data"])
-                
-                # Handle nested multipart (recursive)
                 elif mime_type.startswith("multipart/") and part.get("parts"):
                     nested_body = self._extract_email_body(part)
-                    if nested_body and not plain_text_body:
+                    if nested_body and (not plain_text_body):
                         plain_text_body = nested_body
-            
-            # Prefer plain text, fallback to HTML
             if plain_text_body:
                 return plain_text_body
             elif html_body:
                 return f"[HTML Content]\n{html_body}"
-            
             return ""
-            
         except Exception as e:
             logger.error(f"Error extracting email body: {str(e)}")
             return ""
-    
+
     def _decode_base64(self, data):
         """
         Decodes base64 URL-safe encoded data from Gmail API.
-        
+
         Args:
             data: Base64 URL-safe encoded string
-            
+
         Returns:
             str: Decoded string content
         """
         try:
-            # Gmail API uses URL-safe base64 encoding
             decoded_bytes = base64.urlsafe_b64decode(data)
-            return decoded_bytes.decode('utf-8')
+            return decoded_bytes.decode("utf-8")
         except Exception as e:
             logger.error(f"Error decoding base64 data: {str(e)}")
             return f"[Unable to decode content: {str(e)}]"
@@ -354,39 +302,26 @@ class GoogleMailApp(APIApplication):
             Exception: For general API errors, network issues, or other unexpected problems
 
         Tags:
-            list, messages, gmail, search, query, pagination, important
+            list, messages, gmail, search, query, pagination, important, readOnlyHint, openWorldHint
         """
         url = f"{self.base_api_url}/messages?format=metadata"
-
-        # Build query parameters
         params = {"maxResults": max_results}
-
         if q:
             params["q"] = q
-
         if include_spam_trash:
             params["includeSpamTrash"] = "true"
-
         logger.info(f"Retrieving messages list with params: {params}")
-
         response = self._get(url, params=params)
         data = self._handle_response(response)
-        
-        # Extract message IDs
         messages = data.get("messages", [])
         message_ids = [msg.get("id") for msg in messages if msg.get("id")]
-        
-        # Use ThreadPoolExecutor to get detailed information for each message in parallel
         detailed_messages = []
         if message_ids:
             with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-                # Submit all get_message calls
                 future_to_message_id = {
-                    executor.submit(self.get_message, message_id): message_id 
+                    executor.submit(self.get_message, message_id): message_id
                     for message_id in message_ids
                 }
-                
-                # Collect results as they complete
                 for future in concurrent.futures.as_completed(future_to_message_id):
                     message_id = future_to_message_id[future]
                     try:
@@ -394,14 +329,35 @@ class GoogleMailApp(APIApplication):
                         detailed_messages.append(result)
                     except Exception as e:
                         logger.error(f"Error retrieving message {message_id}: {str(e)}")
-                        # Skip failed messages rather than including error strings
-        
         response_data = GmailMessagesList(
-            messages=detailed_messages,
-            next_page_token=data.get("nextPageToken")  
+            messages=detailed_messages, next_page_token=data.get("nextPageToken")
         )
         import json
+
         return json.dumps(response_data.model_dump())
+
+    def get_thread(self, thread_id: str) -> dict[str, Any]:
+        """
+        Retrieves a specific thread and all its messages from Gmail API.
+
+        Args:
+            thread_id: The unique identifier of the Gmail thread to retrieve
+
+        Returns:
+            A dictionary containing the thread details and all messages in the thread
+
+        Raises:
+            NotAuthorizedError: When Gmail API authentication is invalid or missing
+            KeyError: When required configuration keys are missing
+            Exception: For general errors during API communication or data processing
+
+        Tags:
+            retrieve, email, thread, gmail, api, conversation, important, readOnlyHint, openWorldHint
+        """
+        url = f"{self.base_api_url}/threads/{thread_id}"
+        logger.info(f"Retrieving thread {thread_id}")
+        response = self._get(url)
+        return self._handle_response(response)
 
     def list_labels(self) -> dict[str, Any]:
         """
@@ -418,15 +374,11 @@ class GoogleMailApp(APIApplication):
             Exception: Raised when any other unexpected error occurs during the API request or data processing
 
         Tags:
-            list, gmail, labels, fetch, organize, important, management
+            list, gmail, labels, fetch, organize, important, management, readOnlyHint, openWorldHint
         """
-        
         url = f"{self.base_api_url}/labels"
-
         logger.info("Retrieving Gmail labels")
-
         response = self._get(url)
-
         return self._handle_response(response)
 
     def create_label(self, name: str) -> dict[str, Any]:
@@ -444,22 +396,15 @@ class GoogleMailApp(APIApplication):
             Exception: Raised for any other unexpected errors during label creation
 
         Tags:
-            create, label, gmail, management, important
-        """
-
+            create, label, gmail, management, important, openWorldHint"""
         url = f"{self.base_api_url}/labels"
-
-            # Create the label data with just the essential fields
         label_data = {
-                "name": name,
-                "labelListVisibility": "labelShow",  # Show in label list
-                "messageListVisibility": "show",  # Show in message list
-            }
-
+            "name": name,
+            "labelListVisibility": "labelShow",
+            "messageListVisibility": "show",
+        }
         logger.info(f"Creating new Gmail label: {name}")
-
         response = self._post(url, label_data)
-
         return self._handle_response(response)
 
     def get_profile(self) -> dict[str, Any]:
@@ -477,18 +422,32 @@ class GoogleMailApp(APIApplication):
             Exception: Raised for any other unexpected errors during the API request or data processing
 
         Tags:
-            fetch, profile, gmail, user-info, api-request, important
+            fetch, profile, gmail, user-info, api-request, important, readOnlyHint, openWorldHint
         """
-        
         url = f"{self.base_api_url}/profile"
-
         logger.info("Retrieving Gmail user profile")
-
         response = self._get(url)
         return self._handle_response(response)
 
-
-    def watch_users(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, labelFilterAction=None, labelFilterBehavior=None, labelIds=None, topicName=None) -> dict[str, Any]:
+    def watch_users(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        labelFilterAction=None,
+        labelFilterBehavior=None,
+        labelIds=None,
+        topicName=None,
+    ) -> dict[str, Any]:
         """
         Watch Users
 
@@ -526,24 +485,53 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Notifications
-        """
+            Notifications, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'labelFilterAction': labelFilterAction,
-            'labelFilterBehavior': labelFilterBehavior,
-            'labelIds': labelIds,
-            'topicName': topicName,
+            "labelFilterAction": labelFilterAction,
+            "labelFilterBehavior": labelFilterBehavior,
+            "labelIds": labelIds,
+            "topicName": topicName,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/watch"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def stop_notifications_for_user(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def stop_notifications_for_user(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Stop Notifications for User
 
@@ -565,17 +553,48 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Notifications
-        """
+            Notifications, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/stop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def send_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, id=None, message=None) -> dict[str, Any]:
+    def send_drafts(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        id=None,
+        message=None,
+    ) -> dict[str, Any]:
         """
         Send Drafts
 
@@ -646,22 +665,50 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Drafts
-        """
+            Drafts, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'id': id,
-            'message': message,
-        }
+        request_body = {"id": id, "message": message}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/send"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_drafts(self, userId, id, format=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_drafts(
+        self,
+        userId,
+        id,
+        format=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Drafts
 
@@ -685,19 +732,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Drafts
-        """
+            Drafts, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('format', format), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("format", format),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, message=None) -> dict[str, Any]:
+    def update_drafts(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        message=None,
+    ) -> dict[str, Any]:
         """
         Update Drafts
 
@@ -774,18 +853,46 @@ class GoogleMailApp(APIApplication):
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
-        request_body = {
-            'id': id,
-            'message': message,
-        }
+        request_body = {"id": id, "message": message}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_drafts(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_drafts(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Drafts
 
@@ -808,19 +915,50 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Drafts
-        """
+            Drafts, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_drafts(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, id=None, message=None) -> dict[str, Any]:
+    def create_drafts(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        id=None,
+        message=None,
+    ) -> dict[str, Any]:
         """
         Create Drafts
 
@@ -891,22 +1029,53 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Drafts
-        """
+            Drafts, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'id': id,
-            'message': message,
-        }
+        request_body = {"id": id, "message": message}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/drafts"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_history(self, userId, maxResults=None, pageToken=None, startHistoryId=None, labelId=None, historyTypes=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_history(
+        self,
+        userId,
+        maxResults=None,
+        pageToken=None,
+        startHistoryId=None,
+        labelId=None,
+        historyTypes=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List History
 
@@ -933,17 +1102,52 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            History
-        """
+            History, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/history"
-        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('startHistoryId', startHistoryId), ('labelId', labelId), ('historyTypes', historyTypes), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("maxResults", maxResults),
+                ("pageToken", pageToken),
+                ("startHistoryId", startHistoryId),
+                ("labelId", labelId),
+                ("historyTypes", historyTypes),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def trash_messsages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def trash_messsages(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Trash Messsages
 
@@ -966,19 +1170,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/trash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def untrash_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def untrash_messages(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Untrash Messages
 
@@ -1001,19 +1235,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/untrash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def modify_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
+    def modify_messages(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        addLabelIds=None,
+        removeLabelIds=None,
+    ) -> dict[str, Any]:
         """
         Modify Messages
 
@@ -1057,18 +1323,46 @@ class GoogleMailApp(APIApplication):
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
-        request_body = {
-            'addLabelIds': addLabelIds,
-            'removeLabelIds': removeLabelIds,
-        }
+        request_body = {"addLabelIds": addLabelIds, "removeLabelIds": removeLabelIds}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}/modify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def batch_delete(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, ids=None) -> Any:
+    def batch_delete(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        ids=None,
+    ) -> Any:
         """
         Batch Delete
 
@@ -1100,21 +1394,61 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Messages
-        """
+            Messages, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'ids': ids,
-        }
+        request_body = {"ids": ids}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/batchDelete"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def import_messages(self, userId, internalDateSource=None, neverMarkSpam=None, processForCalendar=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def import_messages(
+        self,
+        userId,
+        internalDateSource=None,
+        neverMarkSpam=None,
+        processForCalendar=None,
+        deleted=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        historyId=None,
+        id=None,
+        internalDate=None,
+        labelIds=None,
+        payload=None,
+        raw=None,
+        sizeEstimate=None,
+        snippet=None,
+        threadId=None,
+    ) -> dict[str, Any]:
         """
         Import Messages
 
@@ -1198,24 +1532,67 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'historyId': historyId,
-            'id': id,
-            'internalDate': internalDate,
-            'labelIds': labelIds,
-            'payload': payload,
-            'raw': raw,
-            'sizeEstimate': sizeEstimate,
-            'snippet': snippet,
-            'threadId': threadId,
+            "historyId": historyId,
+            "id": id,
+            "internalDate": internalDate,
+            "labelIds": labelIds,
+            "payload": payload,
+            "raw": raw,
+            "sizeEstimate": sizeEstimate,
+            "snippet": snippet,
+            "threadId": threadId,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/import"
-        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('neverMarkSpam', neverMarkSpam), ('processForCalendar', processForCalendar), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("internalDateSource", internalDateSource),
+                ("neverMarkSpam", neverMarkSpam),
+                ("processForCalendar", processForCalendar),
+                ("deleted", deleted),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def send_messages(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def send_messages(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        historyId=None,
+        id=None,
+        internalDate=None,
+        labelIds=None,
+        payload=None,
+        raw=None,
+        sizeEstimate=None,
+        snippet=None,
+        threadId=None,
+    ) -> dict[str, Any]:
         """
         Send Messages
 
@@ -1290,29 +1667,61 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'historyId': historyId,
-            'id': id,
-            'internalDate': internalDate,
-            'labelIds': labelIds,
-            'payload': payload,
-            'raw': raw,
-            'sizeEstimate': sizeEstimate,
-            'snippet': snippet,
-            'threadId': threadId,
+            "historyId": historyId,
+            "id": id,
+            "internalDate": internalDate,
+            "labelIds": labelIds,
+            "payload": payload,
+            "raw": raw,
+            "sizeEstimate": sizeEstimate,
+            "snippet": snippet,
+            "threadId": threadId,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/send"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def batch_modify(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, ids=None, removeLabelIds=None) -> Any:
+    def batch_modify(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        addLabelIds=None,
+        ids=None,
+        removeLabelIds=None,
+    ) -> Any:
         """
         Batch Modify
 
@@ -1359,18 +1768,59 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'addLabelIds': addLabelIds,
-            'ids': ids,
-            'removeLabelIds': removeLabelIds,
+            "addLabelIds": addLabelIds,
+            "ids": ids,
+            "removeLabelIds": removeLabelIds,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/batchModify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def insert_messages(self, userId, internalDateSource=None, deleted=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, historyId=None, id=None, internalDate=None, labelIds=None, payload=None, raw=None, sizeEstimate=None, snippet=None, threadId=None) -> dict[str, Any]:
+    def insert_messages(
+        self,
+        userId,
+        internalDateSource=None,
+        deleted=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        historyId=None,
+        id=None,
+        internalDate=None,
+        labelIds=None,
+        payload=None,
+        raw=None,
+        sizeEstimate=None,
+        snippet=None,
+        threadId=None,
+    ) -> dict[str, Any]:
         """
         Insert Messages
 
@@ -1447,29 +1897,63 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'historyId': historyId,
-            'id': id,
-            'internalDate': internalDate,
-            'labelIds': labelIds,
-            'payload': payload,
-            'raw': raw,
-            'sizeEstimate': sizeEstimate,
-            'snippet': snippet,
-            'threadId': threadId,
+            "historyId": historyId,
+            "id": id,
+            "internalDate": internalDate,
+            "labelIds": labelIds,
+            "payload": payload,
+            "raw": raw,
+            "sizeEstimate": sizeEstimate,
+            "snippet": snippet,
+            "threadId": threadId,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages"
-        query_params = {k: v for k, v in [('internalDateSource', internalDateSource), ('deleted', deleted), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("internalDateSource", internalDateSource),
+                ("deleted", deleted),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_messages(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_messages(
+        self,
+        userId,
+        id,
+        format=None,
+        metadataHeaders=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Messages
 
@@ -1494,19 +1978,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}"
-        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("format", format),
+                ("metadataHeaders", metadataHeaders),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_messages(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_messages(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Messages
 
@@ -1529,19 +2045,50 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Messages
-        """
+            Messages, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_attachments(self, userId, messageId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_attachments(
+        self,
+        userId,
+        messageId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Attachments
 
@@ -1565,8 +2112,7 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Messages
-        """
+            Messages, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if messageId is None:
@@ -1574,12 +2120,52 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/messages/{messageId}/attachments/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_labels(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, id=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def create_labels(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        color=None,
+        id=None,
+        labelListVisibility=None,
+        messageListVisibility=None,
+        messagesTotal=None,
+        messagesUnread=None,
+        name=None,
+        threadsTotal=None,
+        threadsUnread=None,
+        type=None,
+    ) -> dict[str, Any]:
         """
         Create Labels
 
@@ -1629,30 +2215,60 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Labels
-        """
+            Labels, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'color': color,
-            'id': id,
-            'labelListVisibility': labelListVisibility,
-            'messageListVisibility': messageListVisibility,
-            'messagesTotal': messagesTotal,
-            'messagesUnread': messagesUnread,
-            'name': name,
-            'threadsTotal': threadsTotal,
-            'threadsUnread': threadsUnread,
-            'type': type,
+            "color": color,
+            "id": id,
+            "labelListVisibility": labelListVisibility,
+            "messageListVisibility": messageListVisibility,
+            "messagesTotal": messagesTotal,
+            "messagesUnread": messagesUnread,
+            "name": name,
+            "threadsTotal": threadsTotal,
+            "threadsUnread": threadsUnread,
+            "type": type,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_labels(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Labels
 
@@ -1675,19 +2291,58 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Labels
-        """
+            Labels, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def update_labels(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        color=None,
+        labelListVisibility=None,
+        messageListVisibility=None,
+        messagesTotal=None,
+        messagesUnread=None,
+        name=None,
+        threadsTotal=None,
+        threadsUnread=None,
+        type=None,
+    ) -> dict[str, Any]:
         """
         Update Labels
 
@@ -1737,32 +2392,62 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Labels
-        """
+            Labels, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         request_body = {
-            'color': color,
-            'id': id,
-            'labelListVisibility': labelListVisibility,
-            'messageListVisibility': messageListVisibility,
-            'messagesTotal': messagesTotal,
-            'messagesUnread': messagesUnread,
-            'name': name,
-            'threadsTotal': threadsTotal,
-            'threadsUnread': threadsUnread,
-            'type': type,
+            "color": color,
+            "id": id,
+            "labelListVisibility": labelListVisibility,
+            "messageListVisibility": messageListVisibility,
+            "messagesTotal": messagesTotal,
+            "messagesUnread": messagesUnread,
+            "name": name,
+            "threadsTotal": threadsTotal,
+            "threadsUnread": threadsUnread,
+            "type": type,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_labels(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Labels
 
@@ -1785,19 +2470,58 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Labels
-        """
+            Labels, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_labels(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, color=None, labelListVisibility=None, messageListVisibility=None, messagesTotal=None, messagesUnread=None, name=None, threadsTotal=None, threadsUnread=None, type=None) -> dict[str, Any]:
+    def patch_labels(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        color=None,
+        labelListVisibility=None,
+        messageListVisibility=None,
+        messagesTotal=None,
+        messagesUnread=None,
+        name=None,
+        threadsTotal=None,
+        threadsUnread=None,
+        type=None,
+    ) -> dict[str, Any]:
         """
         Patch Labels
 
@@ -1847,32 +2571,64 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Labels
-        """
+            Labels, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         request_body = {
-            'color': color,
-            'id': id,
-            'labelListVisibility': labelListVisibility,
-            'messageListVisibility': messageListVisibility,
-            'messagesTotal': messagesTotal,
-            'messagesUnread': messagesUnread,
-            'name': name,
-            'threadsTotal': threadsTotal,
-            'threadsUnread': threadsUnread,
-            'type': type,
+            "color": color,
+            "id": id,
+            "labelListVisibility": labelListVisibility,
+            "messageListVisibility": messageListVisibility,
+            "messagesTotal": messagesTotal,
+            "messagesUnread": messagesUnread,
+            "name": name,
+            "threadsTotal": threadsTotal,
+            "threadsUnread": threadsUnread,
+            "type": type,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/labels/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_threads(self, userId, id, format=None, metadataHeaders=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_threads(
+        self,
+        userId,
+        id,
+        format=None,
+        metadataHeaders=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Threads
 
@@ -1897,19 +2653,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Theads
-        """
+            Theads, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}"
-        query_params = {k: v for k, v in [('format', format), ('metadataHeaders', metadataHeaders), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("format", format),
+                ("metadataHeaders", metadataHeaders),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_threads(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Threads
 
@@ -1932,19 +2720,51 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            Theads
-        """
+            Theads, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def modify_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, addLabelIds=None, removeLabelIds=None) -> dict[str, Any]:
+    def modify_threads(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        addLabelIds=None,
+        removeLabelIds=None,
+    ) -> dict[str, Any]:
         """
         Modify Threads
 
@@ -1982,24 +2802,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Theads
-        """
+            Theads, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
-        request_body = {
-            'addLabelIds': addLabelIds,
-            'removeLabelIds': removeLabelIds,
-        }
+        request_body = {"addLabelIds": addLabelIds, "removeLabelIds": removeLabelIds}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}/modify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def trash_threads(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def trash_threads(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Trash Threads
 
@@ -2022,19 +2869,53 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Theads
-        """
+            Theads, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads/{id}/trash"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_threads(self, userId, maxResults=None, pageToken=None, q=None, labelIds=None, includeSpamTrash=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_threads(
+        self,
+        userId,
+        maxResults=None,
+        pageToken=None,
+        q=None,
+        labelIds=None,
+        includeSpamTrash=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List Threads
 
@@ -2061,17 +2942,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            Theads
-        """
+            Theads, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/threads"
-        query_params = {k: v for k, v in [('maxResults', maxResults), ('pageToken', pageToken), ('q', q), ('labelIds', labelIds), ('includeSpamTrash', includeSpamTrash), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("maxResults", maxResults),
+                ("pageToken", pageToken),
+                ("q", q),
+                ("labelIds", labelIds),
+                ("includeSpamTrash", includeSpamTrash),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_imap(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         GET IMAP
 
@@ -2093,17 +3008,50 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, imap
-        """
+            settings, imap, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/imap"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_imap(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, autoExpunge=None, enabled=None, expungeBehavior=None, maxFolderSize=None) -> dict[str, Any]:
+    def update_imap(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        autoExpunge=None,
+        enabled=None,
+        expungeBehavior=None,
+        maxFolderSize=None,
+    ) -> dict[str, Any]:
         """
         Update IMAP
 
@@ -2143,19 +3091,49 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'autoExpunge': autoExpunge,
-            'enabled': enabled,
-            'expungeBehavior': expungeBehavior,
-            'maxFolderSize': maxFolderSize,
+            "autoExpunge": autoExpunge,
+            "enabled": enabled,
+            "expungeBehavior": expungeBehavior,
+            "maxFolderSize": maxFolderSize,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/imap"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_pop_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get POP Settings
 
@@ -2177,17 +3155,48 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, pop
-        """
+            settings, pop, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/pop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_pop_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, accessWindow=None, disposition=None) -> dict[str, Any]:
+    def update_pop_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        accessWindow=None,
+        disposition=None,
+    ) -> dict[str, Any]:
         """
         Update POP Settings
 
@@ -2222,18 +3231,45 @@ class GoogleMailApp(APIApplication):
         """
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'accessWindow': accessWindow,
-            'disposition': disposition,
-        }
+        request_body = {"accessWindow": accessWindow, "disposition": disposition}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/pop"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_vacation_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Vacation Settings
 
@@ -2255,17 +3291,54 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, vacation
-        """
+            settings, vacation, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/vacation"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_vacation_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, enableAutoReply=None, endTime=None, responseBodyHtml=None, responseBodyPlainText=None, responseSubject=None, restrictToContacts=None, restrictToDomain=None, startTime=None) -> dict[str, Any]:
+    def update_vacation_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        enableAutoReply=None,
+        endTime=None,
+        responseBodyHtml=None,
+        responseBodyPlainText=None,
+        responseSubject=None,
+        restrictToContacts=None,
+        restrictToDomain=None,
+        startTime=None,
+    ) -> dict[str, Any]:
         """
         Update Vacation Settings
 
@@ -2308,28 +3381,57 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, vacation
-        """
+            settings, vacation, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'enableAutoReply': enableAutoReply,
-            'endTime': endTime,
-            'responseBodyHtml': responseBodyHtml,
-            'responseBodyPlainText': responseBodyPlainText,
-            'responseSubject': responseSubject,
-            'restrictToContacts': restrictToContacts,
-            'restrictToDomain': restrictToDomain,
-            'startTime': startTime,
+            "enableAutoReply": enableAutoReply,
+            "endTime": endTime,
+            "responseBodyHtml": responseBodyHtml,
+            "responseBodyPlainText": responseBodyPlainText,
+            "responseSubject": responseSubject,
+            "restrictToContacts": restrictToContacts,
+            "restrictToDomain": restrictToDomain,
+            "startTime": startTime,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/vacation"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_language_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Language Settings
 
@@ -2351,17 +3453,47 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, language
-        """
+            settings, language, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/language"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_language_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayLanguage=None) -> dict[str, Any]:
+    def update_language_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        displayLanguage=None,
+    ) -> dict[str, Any]:
         """
         Update Language Settings
 
@@ -2390,21 +3522,48 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, language
-        """
+            settings, language, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'displayLanguage': displayLanguage,
-        }
+        request_body = {"displayLanguage": displayLanguage}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/language"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_auto_forwarding_settings(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_auto_forwarding_settings(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Auto Forwarding Settings
 
@@ -2426,17 +3585,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, autoForwarding
-        """
+            settings, autoForwarding, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/autoForwarding"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_auto_forwarding(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, disposition=None, emailAddress=None, enabled=None) -> dict[str, Any]:
+    def update_auto_forwarding(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        disposition=None,
+        emailAddress=None,
+        enabled=None,
+    ) -> dict[str, Any]:
         """
         Update Auto Forwarding
 
@@ -2469,23 +3660,54 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, autoForwarding
-        """
+            settings, autoForwarding, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'disposition': disposition,
-            'emailAddress': emailAddress,
-            'enabled': enabled,
+            "disposition": disposition,
+            "emailAddress": emailAddress,
+            "enabled": enabled,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/autoForwarding"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def set_default_smime_config(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def set_default_smime_config(
+        self,
+        userId,
+        sendAsEmail,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Set default S/MIME config
 
@@ -2509,8 +3731,7 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Send As, Send As Email, SMIME INFO, Set Default
-        """
+            settings, Send As, Send As Email, SMIME INFO, Set Default, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
@@ -2518,12 +3739,44 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}/setDefault"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_send_as_smime_info(
+        self,
+        userId,
+        sendAsEmail,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Send As SMIME Info
 
@@ -2547,8 +3800,7 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email, SMIME INFO
-        """
+            settings, Send As, Send As Email, SMIME INFO, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
@@ -2556,12 +3808,44 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_send_as_smime_info(self, userId, sendAsEmail, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_send_as_smime_info(
+        self,
+        userId,
+        sendAsEmail,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Send As SMIME INfo
 
@@ -2585,7 +3869,7 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Send As, Send As Email, SMIME INFO
+            settings, Send As, Send As Email, SMIME INFO, destructiveHint, openWorldHint
         """
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
@@ -2594,12 +3878,43 @@ class GoogleMailApp(APIApplication):
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_smime_info(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List SMIME Info
 
@@ -2622,19 +3937,56 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email, SMIME INFO
-        """
+            settings, Send As, Send As Email, SMIME INFO, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def insert_smime_info(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, encryptedKeyPassword=None, expiration=None, id=None, isDefault=None, issuerCn=None, pem=None, pkcs12=None) -> dict[str, Any]:
+    def insert_smime_info(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        encryptedKeyPassword=None,
+        expiration=None,
+        id=None,
+        isDefault=None,
+        issuerCn=None,
+        pem=None,
+        pkcs12=None,
+    ) -> dict[str, Any]:
         """
         Insert SMIME Info
 
@@ -2676,29 +4028,59 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email, SMIME INFO
-        """
+            settings, Send As, Send As Email, SMIME INFO, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         request_body = {
-            'encryptedKeyPassword': encryptedKeyPassword,
-            'expiration': expiration,
-            'id': id,
-            'isDefault': isDefault,
-            'issuerCn': issuerCn,
-            'pem': pem,
-            'pkcs12': pkcs12,
+            "encryptedKeyPassword": encryptedKeyPassword,
+            "expiration": expiration,
+            "id": id,
+            "isDefault": isDefault,
+            "issuerCn": issuerCn,
+            "pem": pem,
+            "pkcs12": pkcs12,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/smimeInfo"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def verify_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def verify_send_as(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Verify Send As
 
@@ -2721,19 +4103,49 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Send As, Send As Email
-        """
+            settings, Send As, Send As Email, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}/verify"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data={}, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_send_as(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Send As
 
@@ -2756,19 +4168,57 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email
-        """
+            settings, Send As, Send As Email, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def update_send_as_setting(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def update_send_as_setting(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        displayName=None,
+        isDefault=None,
+        isPrimary=None,
+        replyToAddress=None,
+        signature=None,
+        smtpMsa=None,
+        treatAsAlias=None,
+        verificationStatus=None,
+    ) -> dict[str, Any]:
         """
         Update Send As Setting
 
@@ -2819,31 +4269,61 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email
-        """
+            settings, Send As, Send As Email, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         request_body = {
-            'displayName': displayName,
-            'isDefault': isDefault,
-            'isPrimary': isPrimary,
-            'replyToAddress': replyToAddress,
-            'sendAsEmail': sendAsEmail,
-            'signature': signature,
-            'smtpMsa': smtpMsa,
-            'treatAsAlias': treatAsAlias,
-            'verificationStatus': verificationStatus,
+            "displayName": displayName,
+            "isDefault": isDefault,
+            "isPrimary": isPrimary,
+            "replyToAddress": replyToAddress,
+            "sendAsEmail": sendAsEmail,
+            "signature": signature,
+            "smtpMsa": smtpMsa,
+            "treatAsAlias": treatAsAlias,
+            "verificationStatus": verificationStatus,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._put(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_send_as(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Send As
 
@@ -2866,19 +4346,57 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Send As, Send As Email
-        """
+            settings, Send As, Send As Email, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_send_as(self, userId, sendAsEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def patch_send_as(
+        self,
+        userId,
+        sendAsEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        displayName=None,
+        isDefault=None,
+        isPrimary=None,
+        replyToAddress=None,
+        signature=None,
+        smtpMsa=None,
+        treatAsAlias=None,
+        verificationStatus=None,
+    ) -> dict[str, Any]:
         """
         Patch Send As
 
@@ -2929,31 +4447,60 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As, Send As Email
-        """
+            settings, Send As, Send As Email, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if sendAsEmail is None:
             raise ValueError("Missing required parameter 'sendAsEmail'")
         request_body = {
-            'displayName': displayName,
-            'isDefault': isDefault,
-            'isPrimary': isPrimary,
-            'replyToAddress': replyToAddress,
-            'sendAsEmail': sendAsEmail,
-            'signature': signature,
-            'smtpMsa': smtpMsa,
-            'treatAsAlias': treatAsAlias,
-            'verificationStatus': verificationStatus,
+            "displayName": displayName,
+            "isDefault": isDefault,
+            "isPrimary": isPrimary,
+            "replyToAddress": replyToAddress,
+            "sendAsEmail": sendAsEmail,
+            "signature": signature,
+            "smtpMsa": smtpMsa,
+            "treatAsAlias": treatAsAlias,
+            "verificationStatus": verificationStatus,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs/{sendAsEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_send_as1(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_send_as1(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Send As
 
@@ -2975,17 +4522,55 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As
-        """
+            settings, Send As, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_send_as(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, displayName=None, isDefault=None, isPrimary=None, replyToAddress=None, sendAsEmail=None, signature=None, smtpMsa=None, treatAsAlias=None, verificationStatus=None) -> dict[str, Any]:
+    def create_send_as(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        displayName=None,
+        isDefault=None,
+        isPrimary=None,
+        replyToAddress=None,
+        sendAsEmail=None,
+        signature=None,
+        smtpMsa=None,
+        treatAsAlias=None,
+        verificationStatus=None,
+    ) -> dict[str, Any]:
         """
         Create Send As
 
@@ -3036,29 +4621,59 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Send As
-        """
+            settings, Send As, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'displayName': displayName,
-            'isDefault': isDefault,
-            'isPrimary': isPrimary,
-            'replyToAddress': replyToAddress,
-            'sendAsEmail': sendAsEmail,
-            'signature': signature,
-            'smtpMsa': smtpMsa,
-            'treatAsAlias': treatAsAlias,
-            'verificationStatus': verificationStatus,
+            "displayName": displayName,
+            "isDefault": isDefault,
+            "isPrimary": isPrimary,
+            "replyToAddress": replyToAddress,
+            "sendAsEmail": sendAsEmail,
+            "signature": signature,
+            "smtpMsa": smtpMsa,
+            "treatAsAlias": treatAsAlias,
+            "verificationStatus": verificationStatus,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/sendAs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_cse_keypairs(self, userId, keyPairId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_cse_keypairs(
+        self,
+        userId,
+        keyPairId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         GET CSE Keypairs
 
@@ -3081,19 +4696,52 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, CSE Identites, Key Pairs
-        """
+            settings, CSE Identites, Key Pairs, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if keyPairId is None:
             raise ValueError("Missing required parameter 'keyPairId'")
-        url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs/{keyPairId}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        url = (
+            f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs/{keyPairId}"
+        )
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_cse_keypairs(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_cse_keypairs(
+        self,
+        userId,
+        pageToken=None,
+        pageSize=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List CSE Keypairs
 
@@ -3117,17 +4765,55 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, CSE Identites, Key Pairs
-        """
+            settings, CSE Identites, Key Pairs, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs"
-        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("pageToken", pageToken),
+                ("pageSize", pageSize),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_cse_keypairs(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, disableTime=None, enablementState=None, keyPairId=None, pem=None, pkcs7=None, privateKeyMetadata=None, subjectEmailAddresses=None) -> dict[str, Any]:
+    def create_cse_keypairs(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        disableTime=None,
+        enablementState=None,
+        keyPairId=None,
+        pem=None,
+        pkcs7=None,
+        privateKeyMetadata=None,
+        subjectEmailAddresses=None,
+    ) -> dict[str, Any]:
         """
         Create CSE Keypairs
 
@@ -3192,27 +4878,58 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, CSE Identites, Key Pairs
-        """
+            settings, CSE Identites, Key Pairs, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'disableTime': disableTime,
-            'enablementState': enablementState,
-            'keyPairId': keyPairId,
-            'pem': pem,
-            'pkcs7': pkcs7,
-            'privateKeyMetadata': privateKeyMetadata,
-            'subjectEmailAddresses': subjectEmailAddresses,
+            "disableTime": disableTime,
+            "enablementState": enablementState,
+            "keyPairId": keyPairId,
+            "pem": pem,
+            "pkcs7": pkcs7,
+            "privateKeyMetadata": privateKeyMetadata,
+            "subjectEmailAddresses": subjectEmailAddresses,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/keypairs"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_cse_identites(self, userId, pageToken=None, pageSize=None, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_cse_identites(
+        self,
+        userId,
+        pageToken=None,
+        pageSize=None,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List CSE Identites
 
@@ -3236,17 +4953,51 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, CSE Identites
-        """
+            settings, CSE Identites, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities"
-        query_params = {k: v for k, v in [('pageToken', pageToken), ('pageSize', pageSize), ('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("pageToken", pageToken),
+                ("pageSize", pageSize),
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_cse_identites(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, emailAddress=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
+    def create_cse_identites(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        emailAddress=None,
+        primaryKeyPairId=None,
+        signAndEncryptKeyPairs=None,
+    ) -> dict[str, Any]:
         """
         Create CSE Identites
 
@@ -3287,18 +5038,51 @@ class GoogleMailApp(APIApplication):
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'emailAddress': emailAddress,
-            'primaryKeyPairId': primaryKeyPairId,
-            'signAndEncryptKeyPairs': signAndEncryptKeyPairs,
+            "emailAddress": emailAddress,
+            "primaryKeyPairId": primaryKeyPairId,
+            "signAndEncryptKeyPairs": signAndEncryptKeyPairs,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def patch_cse_identites(self, userId, emailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, primaryKeyPairId=None, signAndEncryptKeyPairs=None) -> dict[str, Any]:
+    def patch_cse_identites(
+        self,
+        userId,
+        emailAddress,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        primaryKeyPairId=None,
+        signAndEncryptKeyPairs=None,
+    ) -> dict[str, Any]:
         """
         PATCH CSE Identites
 
@@ -3341,18 +5125,49 @@ class GoogleMailApp(APIApplication):
         if emailAddress is None:
             raise ValueError("Missing required parameter 'emailAddress'")
         request_body = {
-            'emailAddress': emailAddress,
-            'primaryKeyPairId': primaryKeyPairId,
-            'signAndEncryptKeyPairs': signAndEncryptKeyPairs,
+            "emailAddress": emailAddress,
+            "primaryKeyPairId": primaryKeyPairId,
+            "signAndEncryptKeyPairs": signAndEncryptKeyPairs,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{emailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._patch(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_cse_idenetites(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_cse_idenetites(
+        self,
+        userId,
+        cseEmailAddress,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         GET CSE Idenetites
 
@@ -3375,19 +5190,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, CSE Identites
-        """
+            settings, CSE Identites, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if cseEmailAddress is None:
             raise ValueError("Missing required parameter 'cseEmailAddress'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{cseEmailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_cse_idenities(self, userId, cseEmailAddress, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_cse_idenities(
+        self,
+        userId,
+        cseEmailAddress,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete CSE Idenities
 
@@ -3410,19 +5255,49 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, CSE Identites
-        """
+            settings, CSE Identites, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if cseEmailAddress is None:
             raise ValueError("Missing required parameter 'cseEmailAddress'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/cse/identities/{cseEmailAddress}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_filters(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Filters
 
@@ -3445,19 +5320,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Filters
-        """
+            settings, Filters, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_filters(self, userId, id, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_filters(
+        self,
+        userId,
+        id,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Filters
 
@@ -3480,19 +5385,48 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Filters
-        """
+            settings, Filters, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if id is None:
             raise ValueError("Missing required parameter 'id'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters/{id}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_filters(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List Filters
 
@@ -3514,17 +5448,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Filters
-        """
+            settings, Filters, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_filters(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, action=None, criteria=None, id=None) -> dict[str, Any]:
+    def create_filters(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        action=None,
+        criteria=None,
+        id=None,
+    ) -> dict[str, Any]:
         """
         Create Filters
 
@@ -3577,23 +5543,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Filters
-        """
+            settings, Filters, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
-        request_body = {
-            'action': action,
-            'criteria': criteria,
-            'id': id,
-        }
+        request_body = {"action": action, "criteria": criteria, "id": id}
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/filters"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_forwarding_addresses(
+        self,
+        userId,
+        forwardingEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Forwarding Addresses
 
@@ -3616,19 +5608,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Forwarding Addresses
-        """
+            settings, Forwarding Addresses, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if forwardingEmail is None:
             raise ValueError("Missing required parameter 'forwardingEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses/{forwardingEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_forwarding_addresses(self, userId, forwardingEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_forwarding_addresses(
+        self,
+        userId,
+        forwardingEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Forwarding Addresses
 
@@ -3651,19 +5673,48 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Forwarding Addresses
-        """
+            settings, Forwarding Addresses, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if forwardingEmail is None:
             raise ValueError("Missing required parameter 'forwardingEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses/{forwardingEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_forwarding_addresses(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_forwarding_addresses(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List Forwarding Addresses
 
@@ -3685,17 +5736,48 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Forwarding Addresses
-        """
+            settings, Forwarding Addresses, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_forwarding_address(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, forwardingEmail=None, verificationStatus=None) -> dict[str, Any]:
+    def create_forwarding_address(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        forwardingEmail=None,
+        verificationStatus=None,
+    ) -> dict[str, Any]:
         """
         Create Forwarding Address
 
@@ -3726,22 +5808,52 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Forwarding Addresses
-        """
+            settings, Forwarding Addresses, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'forwardingEmail': forwardingEmail,
-            'verificationStatus': verificationStatus,
+            "forwardingEmail": forwardingEmail,
+            "verificationStatus": verificationStatus,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/forwardingAddresses"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def get_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def get_delegates(
+        self,
+        userId,
+        delegateEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         Get Delegates
 
@@ -3764,19 +5876,49 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Delegates
-        """
+            settings, Delegates, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if delegateEmail is None:
             raise ValueError("Missing required parameter 'delegateEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates/{delegateEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def delete_delegates(self, userId, delegateEmail, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> Any:
+    def delete_delegates(
+        self,
+        userId,
+        delegateEmail,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> Any:
         """
         Delete Delegates
 
@@ -3799,19 +5941,48 @@ class GoogleMailApp(APIApplication):
             Any: No Content
 
         Tags:
-            settings, Delegates
-        """
+            settings, Delegates, destructiveHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         if delegateEmail is None:
             raise ValueError("Missing required parameter 'delegateEmail'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates/{delegateEmail}"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._delete(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def list_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None) -> dict[str, Any]:
+    def list_delegates(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+    ) -> dict[str, Any]:
         """
         List Delegates
 
@@ -3833,17 +6004,48 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Delegates
-        """
+            settings, Delegates, readOnlyHint, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._get(url, params=query_params)
         response.raise_for_status()
         return response.json()
 
-    def create_delegates(self, userId, access_token=None, alt=None, callback=None, fields=None, key=None, oauth_token=None, prettyPrint=None, quotaUser=None, upload_protocol=None, uploadType=None, xgafv=None, delegateEmail=None, verificationStatus=None) -> dict[str, Any]:
+    def create_delegates(
+        self,
+        userId,
+        access_token=None,
+        alt=None,
+        callback=None,
+        fields=None,
+        key=None,
+        oauth_token=None,
+        prettyPrint=None,
+        quotaUser=None,
+        upload_protocol=None,
+        uploadType=None,
+        xgafv=None,
+        delegateEmail=None,
+        verificationStatus=None,
+    ) -> dict[str, Any]:
         """
         Create Delegates
 
@@ -3874,17 +6076,32 @@ class GoogleMailApp(APIApplication):
             dict[str, Any]: Successful response
 
         Tags:
-            settings, Delegates
-        """
+            settings, Delegates, openWorldHint"""
         if userId is None:
             raise ValueError("Missing required parameter 'userId'")
         request_body = {
-            'delegateEmail': delegateEmail,
-            'verificationStatus': verificationStatus,
+            "delegateEmail": delegateEmail,
+            "verificationStatus": verificationStatus,
         }
         request_body = {k: v for k, v in request_body.items() if v is not None}
         url = f"{self.base_url}/gmail/v1/users/{userId}/settings/delegates"
-        query_params = {k: v for k, v in [('access_token', access_token), ('alt', alt), ('callback', callback), ('fields', fields), ('key', key), ('oauth_token', oauth_token), ('prettyPrint', prettyPrint), ('quotaUser', quotaUser), ('upload_protocol', upload_protocol), ('uploadType', uploadType), ('$.xgafv', xgafv)] if v is not None}
+        query_params = {
+            k: v
+            for k, v in [
+                ("access_token", access_token),
+                ("alt", alt),
+                ("callback", callback),
+                ("fields", fields),
+                ("key", key),
+                ("oauth_token", oauth_token),
+                ("prettyPrint", prettyPrint),
+                ("quotaUser", quotaUser),
+                ("upload_protocol", upload_protocol),
+                ("uploadType", uploadType),
+                ("$.xgafv", xgafv),
+            ]
+            if v is not None
+        }
         response = self._post(url, data=request_body, params=query_params)
         response.raise_for_status()
         return response.json()
@@ -3901,7 +6118,6 @@ class GoogleMailApp(APIApplication):
             self.list_labels,
             self.create_label,
             self.get_profile,
-            # Auto Generated from openapi spec
             self.watch_users,
             self.stop_notifications_for_user,
             self.send_drafts,
@@ -3972,5 +6188,5 @@ class GoogleMailApp(APIApplication):
             self.get_delegates,
             self.delete_delegates,
             self.list_delegates,
-            self.create_delegates
+            self.create_delegates,
         ]
