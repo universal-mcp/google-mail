@@ -68,7 +68,7 @@ class GoogleMailApp(APIApplication):
             logger.error(f"Error creating message: {str(e)}")
             raise
 
-    def create_draft(self, to: str, subject: str, body: str) -> dict[str, Any]:
+    def create_draft(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str = None) -> dict[str, Any]:
         """
         Creates a draft email message in Gmail using the Gmail API and returns a confirmation status.
 
@@ -76,6 +76,8 @@ class GoogleMailApp(APIApplication):
             to: The email address of the recipient
             subject: The subject line of the draft email
             body: The main content/message of the draft email
+            body_type: The MIME subtype for the body ("plain" or "html"). Defaults to "plain".
+            thread_id: Optional thread ID to make this draft a reply to an existing conversation
 
         Returns:
             A string containing either a success message with the draft ID or an error message describing the failure
@@ -86,14 +88,18 @@ class GoogleMailApp(APIApplication):
             Exception: For general API errors, network issues, or other unexpected problems
 
         Tags:
-            create, email, draft, gmail, api, important
+            create, email, draft, gmail, api, important, thread, reply, html
         """
         
         url = f"{self.base_api_url}/drafts"
 
-        raw_message = self._create_message(to, subject, body)
+        raw_message = self._create_message(to, subject, body, body_type)
 
         draft_data = {"message": {"raw": raw_message}}
+        
+        # Add threadId to make it a proper reply if thread_id is provided
+        if thread_id:
+            draft_data["message"]["threadId"] = thread_id
 
         logger.info(f"Creating draft email to {to}")
 
