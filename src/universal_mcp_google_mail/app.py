@@ -326,7 +326,7 @@ class GoogleMailApp(APIApplication):
             return f"[Unable to decode content: {str(e)}]"
 
     def list_messages(
-        self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
+        self, max_results: int = 10, q: str = None, include_spam_trash: bool = False
     ) -> GmailMessagesList:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
@@ -403,12 +403,10 @@ class GoogleMailApp(APIApplication):
                         logger.error(f"Error retrieving message {message_id}: {str(e)}")
                         # Skip failed messages rather than including error strings
         
-        response_data = GmailMessagesList(
-            messages=detailed_messages,
-            next_page_token=data.get("nextPageToken")  
-        )
-        import json
-        return json.dumps(response_data.model_dump())
+        return {
+            "messages": detailed_messages,
+            "next_page_token": data.get("nextPageToken")
+        }
 
     def get_thread(self, thread_id: str) -> dict[str, Any]:
         """
