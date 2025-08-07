@@ -326,7 +326,7 @@ class GoogleMailApp(APIApplication):
             return f"[Unable to decode content: {str(e)}]"
 
     def list_messages(
-        self, max_results: int = 10, q: str = None, include_spam_trash: bool = False
+        self, max_results: int = 10, q: str = None, include_spam_trash: bool = False, page_token: str = None
     ) -> GmailMessagesList:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
@@ -373,6 +373,9 @@ class GoogleMailApp(APIApplication):
 
         if include_spam_trash:
             params["includeSpamTrash"] = "true"
+            
+        if page_token:
+            params["pageToken"] = page_token
 
         logger.info(f"Retrieving messages list with params: {params}")
 
