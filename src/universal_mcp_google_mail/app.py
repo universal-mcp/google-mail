@@ -5,10 +5,8 @@ from loguru import logger
 import concurrent.futures
 
 from universal_mcp.applications import APIApplication
-from universal_mcp.exceptions import NotAuthorizedError
 from universal_mcp.integrations import Integration
 
-from universal_mcp_google_mail.models import GmailMessage, GmailMessagesList  
 
 
 class GoogleMailApp(APIApplication):
@@ -17,7 +15,7 @@ class GoogleMailApp(APIApplication):
         self.base_api_url = "https://gmail.googleapis.com/gmail/v1/users/me"
         self.base_url = "https://gmail.googleapis.com"
 
-    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str = None) -> dict[str, Any]:
+    def send_email(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str | None = None) -> dict[str, Any]:
         """
         Sends an email using the Gmail API and returns a confirmation or error message.
 
@@ -68,7 +66,7 @@ class GoogleMailApp(APIApplication):
             logger.error(f"Error creating message: {str(e)}")
             raise
 
-    def create_draft(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str = None) -> dict[str, Any]:
+    def create_draft(self, to: str, subject: str, body: str, body_type: str = "plain", thread_id: str | None = None) -> dict[str, Any]:
         """
         Creates a draft email message in Gmail using the Gmail API and returns a confirmation status.
 
@@ -170,7 +168,7 @@ class GoogleMailApp(APIApplication):
        
 
     def list_drafts(
-        self, max_results: int = 20, q: str = None, include_spam_trash: bool = False
+        self, max_results: int = 20, q: str | None = None, include_spam_trash: bool = False
     ) -> dict[str, Any]:
         """
         Retrieves and formats a list of email drafts from the user's Gmail mailbox with optional filtering and pagination.
@@ -195,7 +193,7 @@ class GoogleMailApp(APIApplication):
         url = f"{self.base_api_url}/drafts"
 
             # Build query parameters
-        params = {"maxResults": max_results}
+        params: dict[str, Any] = {"maxResults": max_results}
 
         if q:
                 params["q"] = q
@@ -210,7 +208,7 @@ class GoogleMailApp(APIApplication):
         return self._handle_response(response)
 
 
-    def get_message(self, message_id: str) -> GmailMessage:
+    def get_message(self, message_id: str) -> dict[str, Any]:
         """
         Retrieves and formats a specific email message from Gmail API by its ID, including sender, recipient, date, subject, and full message body content.
 
@@ -242,17 +240,17 @@ class GoogleMailApp(APIApplication):
             else:
                 body_content = "No content available"
 
-        message = GmailMessage(
-            message_id=message_id,
-            from_addr=headers.get("From", "Unknown sender"),
-            to=headers.get("To", "Unknown recipient"),
-            date=headers.get("Date", "Unknown date"),
-            subject=headers.get("Subject", "No subject"),
-            body_content=body_content,
-            thread_id=raw_data.get("threadId"),
-        )
+        return{
+            "message_id":message_id,
+            "from_addr":headers.get("From", "Unknown sender"),
+            "to":headers.get("To", "Unknown recipient"),
+            "date":headers.get("Date", "Unknown date"),
+            "subject":headers.get("Subject", "No subject"),
+            "body_content":body_content,
+            "thread_id":raw_data.get("threadId"),
+        }
 
-        return message.model_dump()
+
     def _extract_email_body(self, payload):
         """
         Extracts the email body content from the Gmail API payload.
@@ -326,8 +324,8 @@ class GoogleMailApp(APIApplication):
             return f"[Unable to decode content: {str(e)}]"
 
     def list_messages(
-        self, max_results: int = 10, q: str = None, include_spam_trash: bool = False, page_token: str = None
-    ) -> GmailMessagesList:
+        self, max_results: int = 10, q: str | None = None, include_spam_trash: bool = False, page_token: str | None = None
+    ) ->dict[str, Any]:
         """
         Retrieves and formats a list of messages from the user's Gmail mailbox with optional filtering and pagination support.
 
@@ -366,7 +364,7 @@ class GoogleMailApp(APIApplication):
         url = f"{self.base_api_url}/messages?format=metadata"
 
         # Build query parameters
-        params = {"maxResults": max_results}
+        params: dict[str, Any] = {"maxResults": max_results}
 
         if q:
             params["q"] = q
